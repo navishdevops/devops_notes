@@ -1,5 +1,12 @@
                              git add *                                                             git add .
 move all files and directories except hidden files & directories        move all files and directories   including hidden files & directories
 
+by default every commit is a mixed commit
+mixed commit can perform on moving from staging area to working directory
 
- 
+soft commit can perform on moving from local repository to staging area
+
+hard commit can perform on archiving the files and directories
+
+-----------------------------------------------------------------------------------
+git revert : its used for the latest commit or the head commit to moving the files from  local repository to working directory
