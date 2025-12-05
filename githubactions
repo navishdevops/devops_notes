@@ -1,0 +1,426 @@
+
+
+events --->  on : 
+runner --->  runs-on :
+actions ---> uses :
+
+run  // uses // env
+
+
+****************************************************************************************
+2]  Actions are prebuit automation components that we can use in our workflows to perform certain tasks:
+https://github.com/marketplace?type=actions
+
+immutable:
+mutable:
+****************************************************************************************
+3]  first workflow with multi-line  | 
+****************************************************************************************
+4]  Executing mutliple jobs -: parallel , sequential (needs)
+****************************************************************************************
+5]  Uploading the artifacts or packages into the Specific runner and downloading into another runner :
+****************************************************************************************
+
+
+1st session:
+
+name: First workflow
+on: push
+jobs:
+  test-job:
+      name: first workflow job
+      runs-on: ubuntu-latest
+      steps:
+        - name: executing the test workflow job
+          run: echo "test job execution"
+        - name: view the Readme file content
+          run: cat README.md
+
+-----------------------------------------------
+2nd session : Checkout action
+
+name: First workflow
+on: push
+jobs: 
+  test-job:
+     name: first workflow job
+     runs-on: ubuntu-latest
+     steps:
+       - name: executing the test workflow jobs
+         run:  echo "test job execution"
+       - name: checkout the repo
+         uses: actions/checkout@v6
+       - name: view the Readme file content
+         run: cat README.md
+
+-----------------------------------------------
+3rd session : multi-line commands
+
+Executing multi line commands in first workflow
+
+vi README.md 
+
+I am devops Engineer
+
+name: First workflow
+on: push
+jobs:
+    test-job:
+         name: first workflow jobs
+         runs-on: ubuntu-latest
+         steps:
+           - name: Checkout the repo
+             uses: actions/checkout@v6
+           - name: first workflow with multi-line
+             run : echo "executing the first workflow with multi-line"
+                   cat README.md
+       ===========================================
+name: First workflow
+on: push
+jobs:
+    test-job:
+         name: first workflow jobs
+         runs-on: ubuntu-latest
+         steps:
+           - name: Checkout the repo
+             uses: actions/checkout@v6
+           - name: first workflow with multi-line
+             run : |
+                   echo "executing the first workflow with multi-line"
+                   cat README.md
+
+-----------------------------------------------
+
+4th session : Executing mutliple jobs -: parallel , sequential (needs) .
+
+checkout - build - test - upload - deploy
+
+multiple parallel jobs in one workflow
+
+name: First workflow
+on: push
+jobs:
+  checkout-job:
+    name: checking out the repo
+    runs-on: ubuntu-latest
+    steps: 
+      - name : checkout the repository and sleep
+        uses : actions/checkout@v6
+
+  build-job:
+     name: build the repo
+     runs-on: ubuntu-latest
+     steps: 
+      - name : build the repository and sleep
+        run  : |
+              sleep 2
+              echo "building the repository"
+
+  test-job:
+     name: test the repo
+     runs-on: ubuntu-latest
+     steps: 
+      - name : test the repository and sleep
+        run  : |
+              sleep 3
+              echo "testing the repository"
+              
+  upload-job:
+     name: upload the repo
+     runs-on: ubuntu-latest
+     steps: 
+      - name : upload the repository and sleep
+        run  : |
+              sleep 3
+              echo "uploading the repository"
+
+  deploy-job:
+     name: deploy the repo
+     runs-on: ubuntu-latest
+     steps: 
+      - name : deploy the repository and sleep
+        run  : |
+              sleep 3
+              echo "deploying the repository"
+
+
+================================================= 
+
+multiple sequential jobs in one workflow
+
+name: First workflow
+on: push
+jobs:
+  checkout-job:
+    name: checking out the repo
+    runs-on: ubuntu-latest
+    steps: 
+      - name : checkout the repository and sleep
+        uses : actions/checkout@v6
+
+  build-job:
+     name: build the repo
+     needs: checkout-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : build the repository and sleep
+        run  : |
+              sleep 2
+              echo "building the repository"
+
+  test-job:
+     name: test the repo
+     needs: build-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : test the repository and sleep
+        run  : |
+              sleep 3
+              echo "testing the repository"
+              
+  upload-job:
+     name: upload the repo
+     needs: test-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : upload the repository and sleep
+        run  : |
+              sleep 3
+              echo "uploading the repository"
+
+  deploy-job:
+     name: deploy the repo
+     needs: upload-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : deploy the repository and sleep
+        run  : |
+              sleep 3
+              echo "deploying the repository"
+
+-----------------------------------------------
+
+5th session : Uploading the artifacts or packages into the Specific runner and downloading into another runner :
+
+name: First workflow
+on: push
+jobs:
+  checkout-job:
+    name: checking out the repo
+    runs-on: ubuntu-latest
+    steps: 
+      - name : checkout the repository and sleep
+        uses : actions/checkout@v6
+
+  build-job:
+     name: build the repo
+     needs: checkout-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : build the repository and sleep
+        run  : |
+              sleep 2
+              echo "building the repository" > app.txt
+              cat app.txt
+
+      - name : Uploading the artifact
+        uses: actions/upload-artifact@v4
+        with: 
+           name: app-txt-file
+           path: app.txt
+
+  test-job:
+     name: test the repo
+     needs: build-job
+     runs-on: ubuntu-latest
+     steps:
+      - name : Downloading the artifact
+        uses: actions/download-artifact@v5
+        with: 
+           name: app-txt-file
+
+
+      - name : test the repository and sleep
+        run  : |
+              sleep 3
+              cat app.txt
+              echo "testing the repository" >> app.txt
+              cat app.txt
+
+      - name : Uploading the artifact
+        uses: actions/upload-artifact@v4
+        with: 
+           name: app-txt-file
+           path: app.txt
+              
+  upload-job:
+     name: upload the repo
+     needs: test-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : Downloading the artifact
+        uses: actions/download-artifact@v5
+        with: 
+           name: app-txt-file
+
+      - name : upload the repository and sleep
+        run  : |
+              sleep 4
+              cat app.txt
+              echo "uploading the repository" >> app.txt
+              cat app.txt
+      
+      - name : Uploading the artifact
+        uses: actions/upload-artifact@v4
+        with: 
+           name: app-txt-file
+           path: app.txt
+
+  deploy-job:
+     name: deploy the repo
+     needs: upload-job
+     runs-on: ubuntu-latest
+     steps: 
+      - name : Downloading the artifact
+        uses: actions/download-artifact@v5
+        with: 
+           name: app-txt-file
+
+      - name : deploy the repository and sleep
+        run  : |
+              sleep 5
+              cat app.txt
+              echo "deploying the repository" >> app.txt
+              cat app.txt
+      
+      - name : Uploading the artifact
+        uses: actions/upload-artifact@v4
+        with: 
+           name: app-txt-file
+           path: app.txt
+
+---------------------------------------------------------------------
+6th session:   Variables define at step level -  Variables define at Job level - Variables define at workflow level   
+
+Variables will define with env in a worflow , thats next to name of a workflow , name of a job , name of a step:
+
+
+docker login -u jk2425
+docker build -t jk2425/maven-web-application:latest .
+docker push jk2425/maven-web-application:latest
+docker run -d -p 8080:8080 jk2425/maven-web-application:latest
+
+ubuntu@ip-172-31-28-133:/root/project/maven-webapplication-project-kkfunda$ docker build -t mvn .
+ubuntu@ip-172-31-28-133:/root/project/maven-webapplication-project-kkfunda$ docker tag mvn jk2425/maven-web-application:1
+ubuntu@ip-172-31-28-133:/root/project/maven-webapplication-project-kkfunda$ docker push jk2425/maven-web-application:1
+
+
+Variables to be define at step level
+
+name:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image 
+          run:  echo docker build -t jk2425/maven-web-application:latest .
+        - name: Login to docker hub
+          run:  echo docker login --username=jk2425 --password=*****
+        - name: push the image 
+          run:  echo docker push -t jk2425/maven-web-application:latest
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 jk2425/maven-web-application:latest
+================================================= 
+Variables define at step level
+
+name:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          env:
+            DOCKER_USERNAME=jk2425
+            DOCKER_REGISTRY=maven-web-application
+            DOCKER_TAG=latest
+          run:  echo docker build -t $DOCKER_USERNAME/$DOCKER_REGISTRY:$DOCKER_TAG .
+        - name: Login to docker hub
+          run:  echo docker login --username=jk2425 --password=*****
+        - name: push the image 
+          run:  echo docker push -t jk2425/maven-web-application:latest
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 jk2425/maven-web-application:latest
+
+================================================= 
+Variables define at JOB level
+
+name:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     env:
+            DOCKER_USERNAME=jk2425
+            DOCKER_REGISTRY=maven-web-application
+            DOCKER_TAG=latest
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t $DOCKER_USERNAME/$DOCKER_REGISTRY:$DOCKER_TAG .
+        - name: Login to docker hub
+          run:  echo docker login --username=jk2425 --password=*****
+        - name: push the image 
+          run:  echo docker push -t jk2425/maven-web-application:latest
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 jk2425/maven-web-application:latest
+
+================================================= 
+Variables define at WORKFLOW level
+
+name:
+env:
+            DOCKER_USERNAME=jk2425
+            DOCKER_REGISTRY=maven-web-application
+            DOCKER_TAG=latest
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t $DOCKER_USERNAME/$DOCKER_REGISTRY:$DOCKER_TAG .
+        - name: Login to docker hub
+          run:  echo docker login --username=jk2425 --password=*****
+        - name: push the image 
+          run:  echo docker push -t jk2425/maven-web-application:latest
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 jk2425/maven-web-application:latest
+
+====================================================
+Variables define at repository level
+
