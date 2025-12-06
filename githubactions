@@ -1,5 +1,37 @@
+Notes:
+by default cancel-in-progress is false in github actions worflow.
+by default 360 mins is the maximum time to complete one job or one worflow.
+by default step level timout can consider as high  priority than job level timeout-minutes:
+by default fail-fast  is true 
+
+actions/checkout@v6
+actions/upload-artifact@v4
+actions/download-artifact@v5
+
+run: |
+
+env
+
+schedule :
+push :
+workflow_dispatch :
+cron : 
+workflow_call :
+
+needs
+timeout-minutes
+concurrency
+cancel-in-progress
+
+strategy - matrix - os - images    ${{ matrix.images }} on ${{ matrix.os }}
+
+max-parallel: 2
+fail-fast: false
+exclude
+include
 
 
+ 
 events --->  on : 
 runner --->  runs-on :
 actions ---> uses :
@@ -20,6 +52,21 @@ mutable:
 ****************************************************************************************
 5]  Uploading the artifacts or packages into the Specific runner and downloading into another runner :
 ****************************************************************************************
+6] Varaibles define at repository level and its syntax -: ${{ vars.DOCKER_USERNAME }} env section next to name of workflow/job/step levels
+****************************************************************************************
+7] Secrets define at repository level and its syntax --- : ${{ secrets.DOCKER_PASSWORD }}
+*****************************************************************************************
+8] github actions workflow triggers ie (events --  on: push | on: workflow_dispatch  | on: cron | on : workflow_call | on: schedule )
+*****************************************************************************************
+9] timeout at step level & timeout at job level
+*****************************************************************************************
+10] concurrency  && cancel-in-progress ( latest workflow will trigger, all the previous workflows will cancel ).
+*****************************************************************************************
+11] Github actions : matrix ( ubuntu-latest , windows-latest , mac-os )
+ //  strategy - matrix - os - images    ${{ matrix.images }} on ${{ matrix.os }}
+******************************************************************************************
+12] Github actions matrix configurations: (max-parallel | fail-fast (true-default) | exclude | include)
+
 
 
 1st session:
@@ -201,6 +248,10 @@ jobs:
 -----------------------------------------------
 
 5th session : Uploading the artifacts or packages into the Specific runner and downloading into another runner :
+
+actions/upload-artifact@v4
+actions/download-artifact@v5
+
 
 name: First workflow
 on: push
@@ -421,6 +472,370 @@ jobs:
         - name: deploy the image 
           run: echo docker run -d -p 8080:8080 jk2425/maven-web-application:latest
 
-====================================================
+-------------------------------------------------------------------------------------------
+Session 7:
+
+env
+
 Variables define at repository level
 
+githubactions -- variables : 
+            DOCKER_USERNAME=jk2425
+            DOCKER_REGISTRY=maven-web-application
+            DOCKER_TAG=latest
+
+$DOCKER_USERNAME/$DOCKER_REGISTRY:$DOCKER_TAG .
+
+${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+
+name:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }} .
+        - name: Login to docker hub
+          run:  echo docker login --username=${{ vars.DOCKER_USERNAME }} --password=*****
+        - name: push the image 
+          run:  echo docker push -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+-------------------------------------------------------------------------------------------
+
+SECRETS define at repository level
+
+githubactions -- variables : 
+            DOCKER_USERNAME=jk2425
+            DOCKER_REGISTRY=maven-web-application
+            DOCKER_TAG=latest
+
+$DOCKER_USERNAME/$DOCKER_REGISTRY:$DOCKER_TAG .
+
+${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+githubactions -- secrets : 
+            DOCKER_PASSWORD=12345678
+
+name:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }} .
+        - name: Login to docker hub
+          run:  echo docker login --username=${{ vars.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_REGISTRY }}
+        - name: push the image 
+          run:  echo docker push -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+-----------------------------------------------------------------------------------------------------------------------------
+Session 8: events
+https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
+
+schedule :
+push :
+workflow_dispatch :
+cron : 
+workflow_call :
+
+
+name:
+on: push // workflow_dispatch //
+jobs:
+  test-job:
+     name:
+     runs-on:
+     steps:
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+Session 9: timeout of steps in a workflow
+           timeout of jobs in a workflow
+
+360 mins max time to run and then it will automatically cancelled 
+
+timeout-minutes : 1
+
+
+check this flow with combination of sleep and timeout-minutes : 
+
+
+name:
+on:
+jobs:
+  build-job:
+    name:
+    runs-on:
+    steps:
+       timeout-minutes: 1
+       - run : |
+            sleep 120
+            echo "learn github actions" 
+
+expecting this is fail:
++++++++++++++++++++++++
+
+name:
+on:
+jobs:
+  build-job:
+    name:
+    runs-on:
+    steps:
+       - name: build step
+         timeout-minutes: 1
+         run : |
+            sleep 120
+            echo "learn github actions"       
+
+expecting this is pass:
++++++++++++++++++++++++
+
+name:
+on:
+jobs:
+  build-job:
+    name:
+    runs-on:
+    steps:
+       - name: build step
+         timeout-minutes: 2
+         run : |
+            sleep 60
+            echo "learn github actions"
+
+write a  yaml for a step level timeout 
+
+write a  yaml  for a job level timeout 
+
+write a  yaml for a workflow level timeout 
+
+---------------------------------------------------------------------------------------------------------
+
+Session 10:
+
+Concurrency of workflows and jobs in Git hub actions:
+
+By default in git hub actions we can run multiple workflows or jobs at the sametime
+
+
+name:
+Concurrency:
+on:
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }} .
+        - name: Login to docker hub
+          run:  echo docker login --username=${{ vars.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_REGISTRY }}
+        - name: push the image 
+          run:  echo docker push -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+  deploy-job:
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: echo docker run -d -p 8080:8080 ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+-------------------------------------
+
+name: concurreny workflow
+on: push
+jobs:
+  docker-job:
+     name: build tag and push the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: build the image
+          run:  echo docker build -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }} .
+        - name: Login to docker hub
+          run:  echo docker login --username=${{ vars.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_REGISTRY }}
+        - name: push the image 
+          run:  echo docker push -t ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+
+  deploy-job:
+     needs: docker-job
+     Concurrency:
+         group: prod
+     name: deploy the image 
+     runs-on: ubuntu-latest
+     steps:
+        - name: deploy the image 
+          run: |
+            echo docker run -d -p 8080:8080 ${{ vars.DOCKER_USERNAME }}/${{ vars.DOCKER_REGISTRY }}:${{ vars.DOCKER_TAG }}
+            sleep 3000
+
+the above workflow will run  till 5mins because of the sleep 3000 ,
+
+will do one another small change in the same workflow and  run the workflow.
+
+name: build tag and push the image   to name: building tagging and pushing the image 
+
+now the 2 workflows will be running at the sametime.
+
+using Concurrency key word to ensure run only one workflow at a time ( at once).
+
+concurrency key word can be use at workflow level.
+from on: push  to  on: push
+                   concurrency
+
+concurrency key word can be use at job level.
+
+    from deploy-job:                to     deploy-job:
+           needs: docker-job                 needs: docker-job
+                                             Concurrency:
+                                                group: prod
+
+once the above is configured to the workflow  , run it.
+
+do one small change in any name section and re-run the workflow.
+
+Observation:
+1) the workflow which is configured concurrency keyword at job level will run and the next workflow will be in queue ( pending state ),
+  if we triggered the another 3rd workflow after making one another  small change , the previous workflow which is in queue will be
+  automatically cancelled. 
+  
+  if its should not cancel and run the latest workflow we can use cancel-in-progress key word to cancel the 1st workflow
+  which is running prior to workflow. 
+
+needs
+timeout-minutes
+concurrency
+cancel-in-progress
+
+by default cancel-in-progress is false in github actions worflow.
+by default 360 mins is the maximum time to complete one job or one worflow.
+by default step level timout can consider as high  priority than job level timeout-minutes:
+by default fail-fast  is true 
+-------------------------------------------------------------------------------------------------------------------------------------
+Session 11 :
+Github actions Matrix
+
+remember matrices once in engineering  [ 1 2 3 4 5 ]:
+
+name: matrix workflow
+on: push
+jobs:
+  ubuntu-deployment:
+     name: docker image deployment on ubuntu
+     runs-on: ubuntu-latest
+     steps:
+       - name: creating a ubuntu container
+         run: docker run hello-world 
+  windows-deployment:
+     name: docker image deployment on windows
+     runs-on: windows-latest
+     steps:
+       - name: creating a windows container
+         run: docker run hello-world
+----------------------------------------------------------------
+
+Observations regarding above workflow.
+1) 2 jobs will trigger , one is for ubuntu and second is windows.
+2) only difference is operation system  and repeating the jobs.
+3) matrix concept is used to optimise the workflow to test the different images with different versions.
+
+Avoiding repeating duplicating same piece of code multiple times.
+
+name: matrix workflow
+on: push
+jobs:
+  deployment:
+     name: Deployment in ubuntu and windows os
+     strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+     runs-on: ${{ matrix.os }}
+     steps:
+       - name: creating a ubuntu container
+         run: docker run hello-world 
+
+ notes : 
+ 1)  2 jobs will run parallely       
+ 2)   
+
+=======================================
+
+name: matrix workflow
+on: push
+jobs:
+  deployment:
+     name: Deployment in ubuntu and windows os
+     strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        images: [hello-world, nginx]
+     runs-on: ${{ matrix.os }}
+     steps:
+       - name: creating a  ${{ matrix.images }} on ${{ matrix.os }}
+         run: docker run ${{ matrix.images }} 
+
+Notes :
+1) 4 jobs will run parallely
+2) strategy - matrix - os - images    ${{ matrix.images }} on ${{ matrix.os }}
+---------------------------------------------------        
+Session 12 : 
+
+issues observed on previous workflow 
+deploy job failed on windows-latest with nginx image and that caused to workflow failed entirely.To avoid this fail-fast keyword introduced
+
+
+by default fail-fast  is true 
+
+if we set to fail-fast: false   then if any job fails remaining jobs will still continue to complete the workflow.
+
+
+
+max-parallel: 2
+fail-fast: false
+exclude
+include
+
+name: matrix configurations
+on: push
+jobs:
+  deployment:
+     name: matrix deployments
+     strategy:
+       max-parallel: 2
+       fail-fast: false
+       matrix:
+           os: [windows-latest, ubuntu-latest]
+           images: [helloworld, alpine]
+           exclude: 
+              - os : windows-latest
+                image: alpine
+           include:
+              - os : ubuntu-latest
+                image: node:alpine
+     runs-on: ${{ matrix.os }}
+     steps:
+       - name: creating a  ${{ matrix.images }} on ${{ matrix.os }}
+         run: docker run ${{ matrix.images }}
+
+observations:
+
+total 4 jobs will only run:  windows-latest-helloworld | ubuntu-latest-helloworld | ubuntu-latest-alpine | ubuntu-latest-node:alpine
