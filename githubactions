@@ -3,21 +3,7 @@ by default cancel-in-progress is false in github actions worflow.
 by default 360 mins is the maximum time to complete one job or one worflow.
 by default step level timout can consider as high  priority than job level timeout-minutes:
 by default fail-fast  is true 
-
-actions/checkout@v6
-actions/upload-artifact@v4
-actions/download-artifact@v5
-
-run: |
-
-env
-
-schedule :
-push :
-workflow_dispatch :
-cron : 
-workflow_call :
-
+---------------------------------------------------------------
 needs
 timeout-minutes
 concurrency
@@ -32,11 +18,11 @@ include
 
 
  
-events --->  on : 
-runner --->  runs-on :
-actions ---> uses :
+events --->  on : push  | schedule | workflow_dispatch | workflow_call | cron
+runner --->  runs-on : ubuntu-latest | windows-latest
+actions ---> uses : actions/checkout@v6 | actions/upload-artifact@v4 | actions/download-artifact@v5
 
-run  // uses // env
+steps : run  |  // uses // env
 
 
 ****************************************************************************************
