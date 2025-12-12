@@ -1,3 +1,5 @@
+Modules - playbooks - varibales ( Global scope , host scope ( host_vars , group_vars ) , play scope ) - Loops - handlers
+
 Day 01:
 ------
 
@@ -350,7 +352,7 @@ Imp.Note : syntax of ansible adhoc commands
 --------------------------------------------------------------------------------------------------------
 
 apt :-     ansible all -m apt -a 'name=tomcat8 state=present update_cache=yes' -b
-git :-     ansible all -m git -a 'repo=https://github.com/navishdevops/githubactions.git  dest/tmp/mygit' -b 
+git :-     ansible all -m git -a 'repo=https://github.com/navishdevops/githubactions.git  dest:/tmp/mygit' -b 
 uri :-     ansible all -m uri -a 'https://bagamne.smartenspaces.com/ems/healthcheck/'
 cmd :-     ansible all -m command -i /etc/ansible/hosts -a 'free'
 copy:-     ansible all -m copy -a 'src=/opt/apache-tomcat8/conf/tomcat-users.xml dest=/tmp/' -b
@@ -363,48 +365,408 @@ replace:-  ansible all -m replace -a 'regexp=8080 replace=9090 path=/tmp/tomcat-
 
 -----------------------------------------------------------------------------------------------------------
 
+Day 04:
+------	
+* Playbooks introduction  mkdir -p /home/ubuntu/playbook
+* Simple playbook to install git & clone the git hub repository
+* playbooks to configure tomcat8
+* variables in playbook
+    1) Global scope variables
+	2) Host scope variables
+	3) play scope variables
+* working with Global scope variables
+* working with Host scope variables
+* working with play scope variables
+
+Ansible perform remote configurations in 2 ways  1) Adhoc commmands   
+                                                 2) Playbooks
+
+Adhoc commands are capable of working only on one  module and one set of arguments. 
+when we want to perform complex configurations management activities adhoc command will be difficult to manage.
+In such scenarios we use playbooks. Playbook is combination of multiple play activities on the managed nodes.
+These plays are created to work on single host or group of hosts or all the hosts.
+The main advantage of playbooks is re-usablility playbooks are created using yaml files.
+
+mkdir -p /home/ubuntu/playbook
+cd playbook
+
+A 33) : vi playbook1.yml
+
+---
+- name: Install git and clone a remote repository
+  hosts: all
+  tasks:
+  - name: Install git
+    apt:
+      name: git
+      state: present
+      update_cache: yes
+  - name: clone the remote repository from github
+    git:
+      repo: https://github.com/navishdevops/githubactions.git
+      dest:	/home/ubuntu/newgit
+...	  
+
+A 34) :  ansible-playbook playbook1.yml --syntax-check
+A 35) :  ansible-playbook playbook1.yml -b
+
+A 36) : ansible all -a 'git --version'
+A 37) : ansible all -m command -a 'git --version'
+A 38) : ansible all -m command -i /etc/ansible/hosts -a 'git --version'
+
+A 39) : vi playbook2.yml  ( Create a user on all managed nodes and i want to copy password file 
+       ansible all -m user -a 'name=kiran password=free uid=1067 comment= "A regular user" home=/home/kiran shell=/bin/bash' -bagmane
+	   ansible all -m copy -a 'src=/etc/passwd dest=/home/kiran' -b
+	   
+instead of writing multiple adhoc commands one single playbook can also perform the same operations.
+
+vi playbook2.yml
+---
+- name: create user and copy the password file
+  hosts: all
+  tasks:
+       - name: user creation
+	     user:
+		   name: kiran
+		   password: sunil
+		   uid: 1067
+		   home: /home/kiran
+	   - name: copy password into users home directory	   
+         copy: 
+		   src: /etc/passwd
+		   dest: /home/kiran
+...		   
+
+ansible-playbook playbook2.yml --syntax-check
+ansible-playbook playbook2.yml -b
+
+
+A 40) : vi playbook3.yml  playbook to configure tomcat8 
+
+( first un-install tomcat8 if it is already configured in the server)
+A 41) : ansible all -m apt -a 'name=tomcat8 state=absent purge=yes' -b
+
+vi playbook3.yml
+
+configuration of  tomcat8 : install tomcat8 -- configure users --  modify the port details -- restart the tomcat8 -- check the server  
+
+---
+- name:configure tomcat8
+  hosts: all
+  tasks:
+      - name: install tomcat8
+	    apt:
+		  name: tomcat8
+		  state: present
+	  - name: configure users
+	    copy:
+		   src: /home/ubuntu/tomcat-users.xml
+		  dest: /etc/tomcat8/
+	  - name: modify the port details
+	    replace:
+		  regexp: 8080
+		  replcae: 9090
+	  - name: restart the tomcat8
+	    service: 
+		   name: tomcat8
+		   state: restarted
+	  - name: check the server
+	    uri:
+          url: https:private_ip of manage node1:9090
+      - name: check the server
+	    uri:
+          url: https:private_ip of manage node2:9090		  
+...
+
+ansible-playbook playbook3.yml --syntax-check
+ansible-playbook playbook3.yml -b
+
+how to open url in terminal by using elinks 
+elinks http://google.com we get error like elink is not installed 
+sudo apt-get install elinks -y
+Now run the same command  elinks http://google.com
+
+vi playbook4.yml
+
+web server installation ---- copy the content to index.html
+
+---
+- name : apache webserver configuration
+  hosts:
+  tasks:
+      - name: install apache2
+	    apt:
+		   name: apache2
+		   state: present
+	  - name: edit the header
+	    copy:
+		   content: "welcome to playbooks\n"
+		   dest: /var/www/html/index.html
+	  - name: restart the webserver
+        service:
+           name: apache2
+           state: restarted		   
+      - name: check the server content
+        uri:  
+	      url: http://private_ip of managened_node:8080
+...
+
+ansible-playbook playbook4.yml --syntax-check
+ansible-playbook playbook4.yml -b
+
+
+Day 05:
+------	
+creating re-usable playbooks for using custom variables 
+3 Types of variables
+1) Global scope variable ( Highest Priority ) -- we can pass the values from command prompt 
+2) Host scope variables
+3) play scope variables ( lowest Priority )
+
+vi playbook5.yml
+
+---
+- name: install software package
+  hosts: all
+  tasks: 
+       - name: install tree package
+	     apt:
+		   name: tree
+		   state: present
+		   update_cache: yes
+...
+
+if we run the above playbook 10 times what happens? tree package will install 10 times ? 
+the above playbook is not re-usable for any other package to install or un-install or update the packages.
+
+if we make small changes to the above code will do the re-usablility of playbook multiple times as per the requirements of install - uninstall - upgrade.
+
+vi playbook6.yml
+
+---
+- name: configuration of packages
+  hosts:
+  tasks:
+   - name: Install-uninstall-upgrade the packages
+     apt: 
+	   name: "{{ a }}"
+	   state: "{{ b }}"
+	   update_cache: "{{ c }}"
+...
+
+to run the above playbook by passing values to the varibales
+A 41) : ansible-playbook playbook6.yml --extra-vars "a=git b=absent c=no" -b
+
+the above command will uninstall git from all nodes
+
+run the same playbook with different values 
+
+A 42) : ansible-playbook playbook6.yml --extra-vars "a=git b=present c=yes" -b
+A 43) : ansible-playbook playbook6.yml --extra-vars "a=tree b=present c=no" -b
+A 44) : ansible-playbook playbook6.yml --extra-vars "a=wget b=present c=no" -b
+A 45) : ansible-playbook playbook6.yml --extra-vars "a=unzip b=present c=no" -b
+A 46) : ansible-playbook playbook6.yml --extra-vars "a=curl b=present c=no" -b
+
+
+Before going to host scope variables lets learn about play scope variables ( these have the least priority ) 
+
+3) play scope variables ( lowest Priority )
+playscope variables are defined with in the playbook and they can affect only in one single play.
+
+vi playbook7.yml
+
+---
+- name:
+  hosts:
+  vars:
+    -a: tomcat8
+	-b: present
+	-c: no
+  tasks:
+       - name:
+	     apt:
+		   name: "{{ a }}"
+	       state: "{{ b }}"
+	       update_cache: "{{ c }}"
+		   
+A 47) : ansible-playbook playbook7.yml -b  : it will install tomcat8 without upgrading any packages in all the managed nodes	
+
+if we need to install jenkins with the above playbook7.yml , we can ran by using  --extra-vars from command line so that the ansible command behaves as the 
+global scope varibales instead of play scope varibles
+A 48) : ansible-playbook playbook7.yml --extra-vars "a=jenkins b=present c=no" -b
+
+the above command will install jenkins beacuse global scope variables have the highest priority than play scope variables.
+
+Imp Notes of play scope varibales:-
+
+1) play scope Variables : These variables are defined at individual plays and they can affect only on one play 
+                          the above playbook works like a tempalte who's default behaviour is install tomcat8 but we can bypass that to install our 
+						  custom package by passing the varibles in --extra-vars
+						  
+						  
+
+
+in the inventory file till now we have configured all the private ip's of the managed nodes.
+Now we can do grouping of managed nodes into 3 groups
+webserver ( managed node 1 and managed node 2 )
+appserver ( managed node 3 and managed node 4 )
+dbserver ( managed node 5 ) 	
+
+vi /etc/ansible/hosts
+
+[webserver]
+172.51.1.2	
+172.51.1.3
+[appserver]
+172.51.1.4
+172.51.1.5
+[dbserver]
+172.51.1.6
+
+A 49) : ansible webserver -a 'free'    : to retrive only the information from  ( managed node 1 and managed node 2 )
+A 50) : ansible appserver -a 'free'    : to retrive only the information from  ( managed node 3 and managed node 4 )
+A 51) : ansible dbserver -a 'free'     : to retrive only the information from  ( managed node 5 )
+
+we can perform the grouping on groups 
+
+sudo vi /etc/ansible/hosts
+
+[webserver]
+172.51.1.2	
+172.51.1.3
+[appserver]
+172.51.1.4
+172.51.1.5
+[dbserver]
+172.51.1.6
+
+[south:state]
+webserver
+appserver
+[north:state]
+webserver
+dbserver
+[east:state]
+dbserver
+appserver
+
+A 52) : ansible east -a 'free'  : to retrive only the information from  both dbserver and appserver nodes.
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$Jumpree host file for bagmane deployment$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+[bagmane]
+13.232.1.1 ansible_connection=ssh ansible_user=ubuntu ansible_ssh_private_key_file=/home/prasad/ssh_keys/bagmane-01.pem
+65.123.2.3 ansible_connection=ssh ansible_user=ubuntu ansible_ssh_private_key_file=/home/prasad/ssh_keys/bagmane-02.pem
 
 
 
+group_vars folder should be present in the same location of playbook files 
 
 
 
+2) Host scope varibales: Variables which work on group of hosts is called Host scope variables and these are divided into two types.
+                          1) Variables which work on group of m/c's   ( group_vars ) 
+						  2) Variables which work on one m/c           (host_vars)
 
+In this we can do grouping of managed nodes by using "host_vars" variable and "group_vars" variable
+				  
+  1) Variables which work on group of m/c's ( group_vars ): Variables are designed to work on group of hosts.
+	                                                        they are defined in folder called group_vars
+															this group_vars folder should be present in the same folder where all the playbooks are present
+														    in this group_vars folder we should create a file who's name is same as group_name in inventoryfile
+cd /home/ubuntu/playbooks
+mkdir group_vars
+cd group_vars
+touch webserver appserver dbserver
+webserver appserver dbserver  are nothing but inventoryfile's 
 
+in this inventoryfile we can create variables.
 
+vi webserver
+a: prakash
+b: logiclabs
+c: /home/prakash
+d: 6780
+e: /bin/bash
 
+cd cd /home/ubuntu/playbooks
 
+vi playbook8.yml
+		
+--- 
+- name: using host scope variables
+  hosts: webserver
+  tasks: 
+      - name: user creation
+        user:
+           name: "{{ a }}"
+           password: "{{ b }}"
+           home: "{{ c }}"
+           uid: "{{ d }}"
+           shell: "{{ e }}"
+...
 
+To run the above playbook 
+A 53) :  ansible-playbook playbook8.yml -b
 
+lets add few more variables to the webserver hosts file in group_vars folder 
+vi webserver
+a: prakash
+b: logiclabs
+c: /home/prakash
+d: 6780
+e: /bin/bash
+f: tree
+g: present
+h: no
 
+:wq!
 
+vi playbook9.yml
 
+---
+- name: using host scope variables
+  hosts: webserver
+  tasks:
+    - name: Install software
+      apt:
+         name: "{{ f }}"
+         state: "{{ g }}"
+         update_cache: 	"{{ h }}"
+...		 
+		   
+A 54) :  ansible-playbook playbook9.yml -b
 
+Variables to work on single hosts : These variable are designed to execute on single machine.  that are created in folder called host_vars.
+This host_vars folder should be created in the same location of where the playbooks are present.
 
+mkdir host_vars
+cd host_vars
 
+vi <private_ip of the managed node1>
+a: firewalld
+b: present
+c: yes
 
+:wq!
 
+vi playbook10.yml
 
+---
+- name: using host scope variables
+  hosts: <private_ip of the managed node1>
+  tasks:
+     - name: install firewall
+       apt:
+          name: "{{ a }}"
+          state: "{{ b }}"
+          update_cache: "{{ c }}"
+...
 
+:wq!
 
+ansible-playbook playbook10.yml -b
 
-
-A 33) :
-A 34) :
-A 35) :
-A 36) :
-A 37) :
-A 38) :
-A 39) :
-A 40) :
-A 41) :
-A 42) :
-A 43) :
-A 44) :
-A 45) :
-A 46) :
-A 47) :
-A 48) :
-A 49) :
-A 50) :
-
+Day 06:  Loops and handlers
+------		  
+																	 	   
