@@ -1,0 +1,410 @@
+Day 01:
+------
+
+Ansible is a configuration management tool
+
+configuration management is a process of configuring remote servers from one point of control ( Controller )
+
+Configuration management tool cannot be used for installing OS from the scratch, they can be used only for managing the applications on top of the OS
+
+Advantages of configuration management:- 
+    1) Provisioning of servers :- The applications that should be installed on a server can be done very quickly from a single centralized location.
+	2) Idempotent :- Configuration management tools are used to bring the server to a particular state called as desired state, Configuration management tools
+                     will not re-configure that server.
+if 3 software to be installed in all machines.
+
+MN-1 (1 s/w) MN-2 (2 s/w) MN-3 (3 s/w) MN-4 (0-s/w)  :  Ansible will be responsible to make identical in all managed nodes .
+
+Configuration management tools :- Ansible Chef puppet salt 
+
+Ansible is an opensource configuration management tool, cretaed using python 
+
+Main machine in which ansible is installed called as controller
+
+Controller controls all the managed nodes. 
+
+Remote server that are configured in controller are called as managed nodes.
+
+Ansible uses agent less policy to configure the remote serverS ie., Ansible is installed only on one m/c and we dont require any client side software to be 
+ installed on the remote servers.
+
+Ansible perform configuration management through password less ssh connection  between Controller and managed nodes.
+  
+// create 5 servers (ubuntu)
+                        |-----server 1 / Managed  node 1
+                        |-----server 2 / Managed  node 2
+Controller(Ansible) ----|-----server 3 / Managed  node 3
+                        |-----server 4 / Managed  node 4
+                        |-----server 5 / Managed  node 5
+						
+Make sure all servers installed python
+ansible (from around 2.12 onward), the control-node now supports only recent Python 3 releases. 
+For target/managed nodes (machines you manage with Ansible), ansible-core 2.16 and beyond also require Python 3 for most playbook execution
+
+launch all 5 ec2 m/c's and connect to it
+
+step 1) : sudo apt-get update
+step 2) : sudo apt-get upgrade
+step 3) : sudo apt install -y python3.12 
+step 4) : sudo apt install -y python3-pip
+step 5) : python3 --version
+step 6) : pip3 --version
+
+To establish password less ssh connection  set passowrd for ubuntu user :-   sudo passwd ubuntu  && set password as " ubuntu " only.
+
+step 7) : sudo vi /etc/ssh/sshd_config     :- change to passowrd authentication yes   and then save & quit  :wq!
+step 8) : sudo service ssh restart
+
+Similarly need to configure on server 2, 3 , 4 , 5 of all the above steps from step 1 to step 8. and also take a note of private of 5 server's.
+
+Now in contoller generate the private key   "ssh-keygen"  enter enter enter 
+ copy the private key from controller to all servers by using  below commands
+ssh-copy-id ubuntu@ Pvt.ip of server1
+ssh-copy-id ubuntu@ Pvt.ip of server2
+ssh-copy-id ubuntu@ Pvt.ip of server3
+ssh-copy-id ubuntu@ Pvt.ip of server4
+ssh-copy-id ubuntu@ Pvt.ip of server5
+
+In controller m/c  install ansible now
+
+step 9) : sudo apt install -y software-properties-common
+step 10) : sudo apt update
+step 11) : sudo add-apt-repository --yes --update ppa:ansible/ansible
+step 12) : sudo apt install -y ansible
+step 13) :ansible --version
+
+Configuration of private ip address of node 1,2,3,4,5 in inventory file of controller m/c.
+
+inventory file : vi /etc/ansible/hosts .
+
+configuration is done of all the private ip in hosts file 
+
+to show the all hidden files in the current directory of controller m/c. ---> ls -la 
+
+if we need to check all the hidden files and free space from all the managed nodes.
+A 1) : ansible all -a 'ls -la'
+A 2) : ansible all -a 'free'
+
+Now we have to install git - wget - tree - unzip - java - maven - sonarqube - tomcat - nexus - jenkins in managed nodes .
+
+we can install all the above softwares / packages in the managed nodes from the controller itself.
+we can do bagmane deployments through ansible
+
+****************************************************************************************************************************************************
+
+Day 02:
+------	
+Two Ways of performing configurations
+    1) Using adhoc commands
+	2) using playbooks
+Modules in Ansible:-  Command ( Default ) | Shell | apt | user | file | 
+Creating a new inventory file 
+Working with Shell module
+working with user module
+working with apt module
+
+A 2) : ansible all -a 'free'	 
+
+In ansible adhoc commands by deafult inventory file  is " /etc/ansible/hosts " and default module is " command "
+in the above command its applies by default if we need specify then will use ( its used to check the memory info on all mangaed nodes )
+A 3) : ansible all -i /etc/ansible/hosts -m command -a 'free'
+
+if we need to create a Dockerfile in all the managed nodes 
+A 4) : ansible all -i /etc/ansible/hosts -m command -a 'touch Dockerfile'
+
+check Dockerfile is created or not by switching to managed node 1 or 2 or 3 or 4 or 5 from controller 
+
+ssh private_ip of the server1
+
+ls -lrth
+
+exit  from the managed node 1
+
+Now i want to install docker on all managed nodes at once.
+Tradational method : go to google ---> get.docker.com  ---> copy the url --> curl -fsSL https://get.docker.com -o install-docker.sh --> sh install-docker.sh
+
+Now while perfoming ansible operations by execution of below commands in controller we can install docker on all managed nodes at once.
+A 5) : ansible all -i /etc/ansible/hosts -m shell -a 'curl -fsSL https://get.docker.com -o install-docker.sh'
+
+A 6) : ansible all -i /etc/ansible/hosts -m shell -a 'sh install-docker.sh'
+
+docker --version
+
+switch to any of the managed nodes from controller and check the docker version
+--------------------------------------------------------------------------------------------------------
+Imp.Note : syntax of ansible adhoc commands
+
+A 7) : ansible all/group_name/ip_adress -i path _of_inventory_file -m module_name -a 'arguments' 
+--------------------------------------------------------------------------------------------------------
+                                        30 servers (Managed Nodes) were alloted to group_a 
+lets say we provisioned 100 servers :-  30 servers (Managed Nodes) were alloted to group_b
+                                        40 servers (Managed Nodes) were alloted to group_c
+										
+
+To open the default inventory file sudo vim /etc/ansible/hosts  ---> we have configured 3 private ip's .
+copy the private ip of server 1 and server 2 and create an custom host file ( name of the file is "inventoryfile") and 
+paste the private ip of server 1 and server 2 into new custom file ( inventoryfile ).
+
+A 8) : ansible all -i /etc/ansible/inventoryfile -m command -a 'free'  : it will show the memory info of only server 1 and server 2
+A 9) : ansible all -i /etc/ansible/hosts -m command -a 'free' : it will show the memory info of all the managed nodes.
+A 10) : ansible all -m command -a 'free' : it will also show the memory info of all the managed nodes.
+A 11) : ansible all -a 'free' : it will also show the memory info of all the managed nodes.
+
+command module and /etc/ansible/hosts file is the default things in ansible
+
+Shell Module:  shell module is used for redirection involvement and also used for shell scripting
+
+A 12) : ansible all -m shell -a 'ls -la > files_list'
+
+A 13) : ansible all -i /etc/ansible/hosts -m shell -a 'sh install-docker.sh'
+
+Now i have to create 10 users in all managed nodes 
+
+in tradational method : 
+Login into server 1
+sudo useradd user1
+sudo useradd user2
+sudo useradd user3
+sudo useradd user4
+sudo useradd user5
+
+sudo password user1
+sudo password user2
+sudo password user3
+sudo password user4
+sudo password user5
+
+simialrly execting all the above commands in server 2 , 3 , 4 , 5.
+
+But while using Ansible  adhoc commands:-
+
+we have user module to manage  the users.
+
+A 14) : ansible all -m user -a 'name=anu password=sunil'   will get permissions denied error
+so will use -b at the end to execute with higher previliges on managed nodes.
+A 14) : ansible all -m user -a 'name=anu password=sunil' -b 
+
+login into any one of the managed nodes and check the user is added or not by executing the cat /etc/passwd command.
+
+A 15) : ansible all -m user -a 'name=ravi password=ravi123 uid=1234 comment= "a regular user" home=/home/ubuntu/ravi shell=/bin/bash' -b
+
+Apt module : to install any application or any package will use apt module
+
+Install git in all managed nodes 
+
+A 16) : ansible all -m apt -a 'name=git state=present' -b   
+
+       |---state = present --- used for installation
+apt :--|---state = absent  --- used for un-installation
+       |---state = latest  --- used for upgradation
+
+if git is installed it will show in yellow colour and status is changed as true otherwise
+if git is already  installed it will show in green colour and status response is shown as false
+
+if i need to update the apt repository and install tomcat 8 
+A 17) : ansible all -m apt -a 'name=tomcat8 state=present update_cache=yes' -b   : its used to update the apt repository on all managed nodes.
+check the tomcat version on all managed nodes
+A 18) : ansible all -a 'tomcat --version'
+
+Day 03:
+------	
+*Performing operations using multiple modules
+
+
+Modules in Ansible:-  Command ( Default ) | Shell | user | apt | service | file | copy | fetch | git | replace | uri | cmd |
+
+
+apt - git - uri 
+                - cmd 
+				- copy 
+				       - file
+					   - fetch 
+					            - shell
+								- service
+								          - user
+										  - replace
+										  
+apt   ----- package management    : state = present | absent | latest
+file  ----- files & directories   : state = touch | absent | directory
+service --- managing the services : state = started | stopped | restarted
+
+apt :-     ansible all -m apt -a 'name=tomcat8 state=present update_cache=yes' -b
+git :-     ansible all -m git -a 'repo=https://github.com/navishdevops/githubactions.git  dest/tmp/mygit' -b 
+uri :-     ansible all -m uri -a 'https://bagamne.smartenspaces.com/ems/healthcheck/'
+cmd :-     ansible all -i /etc/ansible/hosts -m command -a 'free'
+copy:-     ansible all -m copy -a 'src=/opt/apache-tomcat8/conf/tomcat-users.xml dest=/tmp/' -b
+file:-     ansible all -m file -a 'name=/tmp/network state=directory'    |  ansible all -m file -a 'name=file5 state=touch owner=anu group=ravi mode=700' -b
+fetch:-    ansible all -m fetch -a 'src=/tmp/tomcat-users.xml dest=/tmp/' -b
+shell:-    ansible all -i /etc/ansible/hosts -m shell -a 'sh install-docker.sh'
+service:-  ansible all -m service -a 'name=tomcat8 state=restarted' -b
+user:-     ansible all -m user -a 'name=ravi password=ravi123 uid=1234 comment= "a regular user" home=/home/ubuntu/ravi shell=/bin/bash' -b
+replace:-  ansible all -m replace -a 'regexp=8080 replace=9090 path=/tmp/tomcat-users.xml' -b
+
+
+File module : 
+
+This is used to create files and directories on all managed nodes  and also 
+used to modify the ownership of a file group ownership of a file and also permissions of a file.
+
+
+A 18) : ansible all -m file -a 'name=/tmp/file5 state=touch' 
+
+switch to any managed node and check the file is created or not in /tmp directory or even we can execute a command from controller to get the list of files
+ from all the managed nodes with the below ansible command
+
+A 19) : ansible all -a 'ls -lrth /tmp'
+
+in tradational method 
+ssh <private_ip of managed node 1> 
+ls -lrth /tmp
+
+we have seen how to create a file , now lets check about creation of directory 
+A 20) : ansible all -m file -a 'name=/tmp/network state=directory' 
+
+To delete the file or the directory will use
+A 21) : ansible all -m file -a 'name=/tmp/file5 state=absent'
+
+
+to modify the permissions of a file or a directory will use
+A 22) : ansible all -m file -a 'name=file5 state=touch owner=anu group=ravi mode=700' -b
+
+the above command will execute only when anu user and ravi group is already exist in all managed nodes 
+
+
+Copy Module :- This is used for copying the files from controller into all managed nodes 
+and also used to modify the ownership of a file group ownership of a file and also permissions of a file that are copied to all managed nodes.
+and also used to add the content into the file.
+
+we know in the file /etc/passwd we have all the information about users now i want to copy the file into all managed nodes.
+
+A 23) : ansible all -m copy -a 'src=/etc/passwd dest=/tmp' 
+
+Scenario : I want to install tomcat --> create few users on tomcat8 on controller and also on all  managed nodes.
+
+vi /opt/apache-tomcat8/conf/tomcat-users.xml 
+<tomcat-users>
+  <user username= "training" password= "free" roles="manager-gui,admin-gui,manager-script"/>
+<tomcat-users>
+:wq!
+
+A 24) : ansible all -m copy -a 'src=/opt/apache-tomcat8/conf/tomcat-users.xml dest=/tmp/' -b
+
+above command crated and copied with ubuntu user then the file owner is ubuntu and its belong to ubuntu group and by default the permissions are 644.
+i want to change the file owner to root and group owner to root and the permission to 777 
+
+A 25) : ansible all -m copy -a 'src=/opt/apache-tomcat8/conf/tomcat-users.xml dest=/tmp/ owner=root group=root mode=777' -b
+
+A 26) : ansible all -m copy -a 'content=sunil/n dest=/tmp/tomcat-users.xml' -b
+
+Fetch module :-  ( opposite to copy module )
+------------ 
+It is used to copy the files from all managed nodes to contoller 
+                               src= managed node path   dest =controller path
+A 27) : ansible all -m fetch -a 'src=/tmp/tomcat-users.xml dest=/tmp/' -b
+
+Git module  :-
+---------- 
+this is used to perform the git ( Version controlling ) related operations on all managed nodes 
+
+A 28) : ansible all -m git -a 'repo=https://github.com/navishdevops/githubactions.git  dest/tmp/mygit' -b 
+
+Service Module:-
+--------------
+This is used for starting,stopping restarting of the serivce.
+Ansible command to restart the tomcat8 on all managed nodes 
+
+A 29) : ansible all -m service -a 'name=tomcat8 state=restarted' -b
+
+State = started --- to start the service
+      = stopped --- to stop the running service
+	  = restarted --- to restart the service.
+
+Replace module :-
+----------------
+Earlier tomcat8 is running on 8080 port on all managed nodes to change the default port to 9090 we can use this replace module 
+
+A 30) : ansible all -m replace -a 'regexp=8080 replace=9090 path=/tmp/tomcat-users.xml' -b
+
+check the tomcat service is running on which port now by executing the public_dns:port_num
+
+we will not get the tomcat page untill restart of tomcat8 service. 
+
+will use service module to restart the tomcat8 service.
+
+A 31) : ansible all -m service -a 'name=tomcat8 state=restarted' -b
+
+now try to hit the tomcat dns_port , page will load properly.
+
+URI module:-
+----------
+I want to check my bagmane server is responding or not 
+
+A 32) : ansible all -m uri -a 'https://bagamne.smartenspaces.com/ems/healthcheck/'    :: green colour status 200
+try with wrong url will get status as " -1 " 
+
+
+--------------------------------------------------------------------------------------------------------
+Imp.Note : syntax of ansible adhoc commands
+
+           ansible all/group_name/ip_adress -m module_name -i path _of_inventory_file  -a 'arguments' 
+--------------------------------------------------------------------------------------------------------
+
+apt :-     ansible all -m apt -a 'name=tomcat8 state=present update_cache=yes' -b
+git :-     ansible all -m git -a 'repo=https://github.com/navishdevops/githubactions.git  dest/tmp/mygit' -b 
+uri :-     ansible all -m uri -a 'https://bagamne.smartenspaces.com/ems/healthcheck/'
+cmd :-     ansible all -m command -i /etc/ansible/hosts -a 'free'
+copy:-     ansible all -m copy -a 'src=/opt/apache-tomcat8/conf/tomcat-users.xml dest=/tmp/' -b
+file:-     ansible all -m file -a 'name=/tmp/network state=directory'    |  ansible all -m file -a 'name=file5 state=touch owner=anu group=ravi mode=700' -b
+fetch:-    ansible all -m fetch -a 'src=/tmp/tomcat-users.xml dest=/tmp/' -b
+shell:-    ansible all -m shell -i /etc/ansible/hosts  -a 'sh install-docker.sh'
+service:-  ansible all -m service -a 'name=tomcat8 state=restarted' -b
+user:-     ansible all -m user -a 'name=ravi password=ravi123 uid=1234 comment= "a regular user" home=/home/ubuntu/ravi shell=/bin/bash' -b
+replace:-  ansible all -m replace -a 'regexp=8080 replace=9090 path=/tmp/tomcat-users.xml' -b
+
+-----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A 33) :
+A 34) :
+A 35) :
+A 36) :
+A 37) :
+A 38) :
+A 39) :
+A 40) :
+A 41) :
+A 42) :
+A 43) :
+A 44) :
+A 45) :
+A 46) :
+A 47) :
+A 48) :
+A 49) :
+A 50) :
+
