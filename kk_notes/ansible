@@ -1,6 +1,27 @@
 Ansible
 =======
 
+Ansible:-
+Introduction
+What is Ansible
+Configuration management
+Ansible Features
+Ansible Architecture
+Host inventory file
+Ansible Installation
+Develop the Ansible playbooks
+Tags
+Handlers
+Group variables and host variables
+Loops
+Conditional statements
+when condition
+Ansible vault
+Ansible Roles
+Working with Dynamic inventory
+
+--------------------------------
+
    Linux 
    Shell scripting
    SCM tools: git [github, bitbucket, gitlab]
