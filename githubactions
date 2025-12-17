@@ -1,29 +1,62 @@
-Notes:
-by default cancel-in-progress is false in github actions worflow.
-by default 360 mins is the maximum time to complete one job or one worflow.
-by default step level timout can consider as high  priority than job level timeout-minutes:
-by default fail-fast  is true 
+🔥 Ultra-Short Last-Minute Revision
+Jobs parallel, steps sequential
+360 min max job runtime
+Step timeout > job timeout
+fail-fast default true (matrix)
+cancel-in-progress default false
+Fresh VM per job
+Secrets masked
+Least privilege permissions
+
+
 ---------------------------------------------------------------
-needs
-timeout-minutes
-concurrency
-cancel-in-progress
 
-strategy - matrix - os - images    ${{ matrix.images }} on ${{ matrix.os }}
-
-max-parallel: 2
-fail-fast: false
-exclude
-include
 
 
  
-events --->  on : push  | schedule | workflow_dispatch | workflow_call | cron
+events --->  on : push  | schedule (cron) | workflow_dispatch | workflow_call | workflow_run
+sequential needs:  --- by default every job runs parallely
 runner --->  runs-on : ubuntu-latest | windows-latest
 actions ---> uses : actions/checkout@v6 | actions/upload-artifact@v4 | actions/download-artifact@v5
+concurrency ---  on:
+                    push:
+                       branches: [ main ] 
+                 concurrency:
+                      group: deploy-main
+                      cancel-in-progress: true
+cancel-in-progess ::: by deafult the cancel-in-progress is false and  the workflows which is running will run and if you execute another workflow it will also run simultaneously.
+                       if you mention cancel-in-progress as true : if you triggered a workflow , that is progress and not completed yet and again you triggered another workflow then the 
+                       second workflow will be in run automatically (  the previous workflow will be cancelled immediately.)
 
-steps : run  |  // uses // env
+steps:
+      - uses: actions/checkout@v4
+      - run: sleep 30
+timeout-minutes:------ 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
+    steps:
+      - name: Deployment script
+        timeout-minutes: 15
+        run: bash deploy.sh
+
+strategy - matrix - os - images    ${{ matrix.images }} on ${{ matrix.os }}
+  max-parallel: 2
+  fail-fast: false
+  exclude
+  include
+
+Contexts:
+
+if expression :
+
+workflow filters: 
+
+Self hosted runner : 
+create aws ec2 machine
+github.com - settings - actions - runner - self hosted --  exeute all the commands -- ./run.sh
 
 ****************************************************************************************
 2]  Actions are prebuit automation components that we can use in our workflows to perform certain tasks:
@@ -825,3 +858,279 @@ jobs:
 observations:
 
 total 4 jobs will only run:  windows-latest-helloworld | ubuntu-latest-helloworld | ubuntu-latest-alpine | ubuntu-latest-node:alpine
+
+
+
+chat gpt version:
+
+1️⃣ Workflow Basics
+
+Workflow files are stored in .github/workflows/*.yml
+
+A workflow is triggered by events
+
+A workflow contains jobs
+
+Jobs contain steps
+
+Steps run sequentially
+
+Jobs run in parallel by default
+
+2️⃣ Triggers (on)
+
+Common triggers:
+
+push
+
+pull_request
+
+workflow_dispatch (manual trigger)
+
+schedule (cron)
+
+You can filter by:
+
+branches
+
+paths
+
+tags
+
+on:
+  push:
+    branches: [ main ]
+
+3️⃣ Runners
+
+runs-on: ubuntu-latest (most common)
+
+GitHub-hosted runners:
+
+ubuntu-latest
+
+windows-latest
+
+macos-latest
+
+Self-hosted runners supported
+
+Each job runs on a fresh VM
+
+4️⃣ Jobs
+
+Jobs run in parallel
+
+Use needs to control order
+
+Default max job runtime: 360 minutes
+
+Job-level timeout:
+
+timeout-minutes: 30
+
+5️⃣ Steps
+
+Steps run sequentially
+
+Two types:
+
+run (shell command)
+
+uses (actions)
+
+Step-level timeout overrides job-level timeout
+
+6️⃣ Actions (uses)
+
+Marketplace reusable actions
+
+Syntax:
+
+uses: actions/checkout@v4
+
+
+Always pin to a version or commit SHA
+
+7️⃣ Environment Variables
+
+Levels:
+
+Workflow
+
+Job
+
+Step
+
+Define using env
+
+Access using:
+
+${{ env.VAR_NAME }} (YAML)
+
+$VAR_NAME (shell)
+
+8️⃣ Secrets
+
+Stored in Repository / Environment / Organization
+
+Access:
+
+${{ secrets.SECRET_NAME }}
+
+
+Secrets are masked in logs
+
+Secrets are not passed to forks by default
+
+9️⃣ Contexts
+
+Common contexts:
+
+github
+
+env
+
+secrets
+
+inputs
+
+jobs
+
+steps
+
+Example:
+
+${{ github.ref }}
+
+🔟 Conditionals (if)
+
+Used at job or step level
+
+if: github.ref == 'refs/heads/main'
+
+
+Default condition: success()
+
+Other functions:
+
+failure()
+
+always()
+
+cancelled()
+
+1️⃣1️⃣ Matrix Strategy
+
+Run jobs with multiple combinations
+
+strategy:
+  matrix:
+    node: [16, 18]
+
+
+Default fail-fast: true
+
+Disable:
+
+fail-fast: false
+
+1️⃣2️⃣ Concurrency
+
+Prevent overlapping runs
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+
+cancel-in-progress default: false
+
+1️⃣3️⃣ Artifacts
+
+Upload files between jobs
+
+uses: actions/upload-artifact@v4
+
+
+Artifacts persist after workflow completion
+
+Useful for logs, reports, build outputs
+
+1️⃣4️⃣ Caching
+
+Speed up builds
+
+uses: actions/cache@v4
+
+
+Cache key must change to refresh cache
+
+Cache is branch-specific
+
+1️⃣5️⃣ Reusable Workflows
+
+Share workflows across repos
+
+uses: org/repo/.github/workflows/build.yml@main
+
+
+Inputs and secrets supported
+
+1️⃣6️⃣ Composite Actions
+
+Bundle multiple steps
+
+Defined using action.yml
+
+Reusable across workflows
+
+1️⃣7️⃣ Permissions
+
+Least privilege principle
+
+permissions:
+  contents: read
+
+
+Default permissions are read-only
+
+Required for OIDC, deployments, PR comments
+
+1️⃣8️⃣ OIDC Authentication
+
+Secure cloud auth (AWS, Azure, GCP)
+
+No long-lived secrets
+
+Uses id-token: write
+
+1️⃣9️⃣ Workflow Status & Logs
+
+Logs available per step
+
+Annotations supported:
+
+error
+
+warning
+
+notice
+
+2️⃣0️⃣ Best Practices (High-Value Interview Points)
+
+Use needs for job dependencies
+
+Pin action versions
+
+Use OIDC instead of cloud secrets
+
+Use concurrency for deployments
+
+Use caching to reduce pipeline time
+
+Avoid secrets in logs
+
+Separate CI and CD workflows
+
+
