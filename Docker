@@ -1,1 +1,841 @@
 
+
+Docker Basics-Docker Installation-Docker Architecture-Docker Terms-Docker key words-Docker compose and Installation-Docker Volumes
+
+Docker Basics
+----------------
+Virtualisation
+Containerisation
+Docker
+Container 
+Docker Client 
+Docker Daemon
+Docker Host
+Docker Engine
+Docker image
+Docker file
+Docker Registry
+Docker Hub
+-----------------------
+Docker Installation on ec2 machine
+Docker Architecture
+Docker terms :- --name -it -e -d -p -P
+-----------------------
+Docker compose installation and its use cases
+-----------------------
+Docker Volumes
+----------------------
+Docker customised images using docker commit
+Docker customised images using Dockerfile
+Docker Keywords  : 
+FROM -- MAINTAINER -- RUN -- USER
+WORKDIR -- ADD -- COPY
+ENV -- EXPOSE -- ENTRYPOINT -- CMD
+VOLUME -- LABEL -- STOP SIGNAL
+
+Cache Busting "&&"
+Docker Registry -- docker login push the image
+Docker swarm - intialisation - configuration - service - handling failover scenarios ( Desired state = Actual State ) - 
+scaling(Rolling update & rollaback of containers.
+
+    --------------
+   | 03 June 2021:|
+    --------------
+what is virutalisation?
+virtualisation is the process of creating a multiple virtual machines on a single physcial host, where each VM runs on its own operating system and applications
+
+what is containerisation?
+Containerisation is the process of packiging an application and its dependencies together into a container so that it can run consistenly across multiple environments.
+it improves the scalability portability and efficiency in the software deployment compared to tradational methods
+
+What is Docker?
+Docker is an opensource platform that allows developers to build,package and run the application.
+  it ensures the application runs consistenly across multiple environments from development to production.
+  Docker automates the deployment of application using lightweight, protable containers instead of virtual machines.
+what is Container?
+
+what is Docker Client 
+what is Docker Daemon
+what is Docker Host
+what is Docker Engine
+what is Docker image
+what is Docker file
+what is Docker Registry
+what is Docker Hub
+
+Installation of Docker on 3 different AMI:-
+
+get.docker.com
+
+apt install docker -y  | service docker start | service docker status | service docker stop |
+
+    --------------
+   | 04 June 2021:|
+    --------------
+Docker file - set of instruction - Build the Dockerfile -- image - container 
+
+if i need one container
+
+Download the image		docker pull command
+RUN the image           docker run 
+
+login to docker 
+
+hub.docker.com
+docker pull tomcat:jre25-temurin-noble
+docker pull mysql:8.0.44-debian
+docker pull jenkins/jenkins:jdk21
+docker pull ubuntu:rolling
+
+once downloaded the images from docker hub to docker host 
+
+
+
+we will spin up the container with the docker images on docker client
+
+Docker best practices
+specify the name - port mapping - detached mode - image_name
+
+Tools--------> default ports 
+tomcat             8080
+jenkins            8080
+
+Docker Daemon :-
+
+docker run --name mytomcat -p 7070:8080 -d tomcat:jre25-temurin-noble
+docker run --name myjenkins -p 9090:8080 -d jenkins/jenkins:jdk21
+
+Operating system like ubuntu redhat centos doesn't require port mapping and it will be logged into the container since --it mentioned and default process of ubuntu is /bin/bash
+
+docker run --name appserver -P -d nginx   (-P :- automatic port mapping to the appserver container)
+
+
+
+--name  docker run --name myjenkins 9090:8080 jenkins/jenkins:jdk21                ----- to specifyt the name of a container
+-p docker run --name mytomcat -p 7070:8080 -d tomcat:jre25-temurin-noble           ----- to specify port mapping for a container
+-d  docker run --name mytomcat -p 7070:8080 -d tomcat:jre25-temurin-noble          ----- to run the contianer in a detached mode
+-P  docker run --name appserver -P -d nginx                                        ----- to do Automatic port mapping
+-it docker run --name myubuntu -it ubuntu:rolling                                  ----- for an interactive mode    
+-e docker run --name mydb -d -e MYSQL_ROOT_PASSWORD=sunil mysql:8.0.44-debian      ----- to indicate the environment variable n     
+
+
+docker port appserver :- to know the port details of this appserver container in the docker host.
+docker container ls
+
+docker run --name mycentos -it centos 
+docker run --name mydb -d -e MYSQL_ROOT_PASSWORD = sunil mysql:8.0.44-debian
+
+docker exec -it mydb bash
+mysql -u root -p
+show databases;
+use my_sql
+
+docker inspect mydb --- to fetch the container ip
+
+    --------------
+   | 07 June 2021 |
+    --------------
+Multi container architecture using docker
+
+--link : busybox - BE/FE  - LAMP CI-CD Env Testing Env
+docker compose
+
+why mutli container architecture is introduced?
+
+2 Conatiners communication  busybox--
+development env : mysql- wordpress 
+LAMP
+CI-CD Environment  Jenkins in dev server ; jenkins in qa server; jenkins in prod server.
+
+2 Conatiners communication  busybox--
+docker run --name b1 -it busybox
+docker run --name b2 --link b1:b1-container -it busybox
+ping b1 or <container_id> or <container_ip>
+
+
+development env : mysql- wordpress
+docker run --name mysql -d -e MYSQL_ROOT_PASSWORD=sunil mysql:8.0.44-debian
+
+docker ps
+docker ps -a
+docker container ls
+
+docker run --name mysite -d  -p 5050:80 --link mysql:mydb wordpress 
+
+docker container public ip :5050  to access the wordpress website
+
+LAMP
+M
+A
+P
+docker run --name mysql -d -e MYSQL_ROOT_PASSWORD=sunil mysql:8.0.44-debian
+
+docker run --name myserver  mytomcat -p 7070:8080 -d --link mysql:mydb tomcat:jre25-temurin-noble
+
+docker run --name myphp -d --link mysql:mydb --link myserver:myapp php
+
+CI-CD Environment  Jenkins in dev server ; jenkins in qa server; jenkins in prod server.
+jenkins 
+
+docker run --name myjenkins -p 6060:8080 -d jenkins/jenkins:jdk21
+
+docker run --name dev_tom -p 7070:8080 -d --link myjenkins:jenkinsserver tomcat:jre25-temurin-noble
+
+docker run --name qa_tom -p 8080:8080 -d --link myjenkins:jenkinsserver tomcat:jre25-temurin-noble
+
+docker run --name prod_tom -p 9090:8080 -d --link myjenkins:jenkinsserver tomcat:jre25-temurin-noble
+
+docker ps
+docker ps -a
+docker container ls
+docker inspect dev_tom
+docker inspect qa_tom
+docker inspect prod_tom
+
+
+Testing environment
+
+docker pull selenium/hub:nightly
+docker pull selenium/node-chrome:nightly
+docker pull selenium/node-firefox:nightly
+docker run --name testinghub -d -p 4444:4444 selenium/hub:nightly
+docker run --name chromehub -d -p 5901:5900 --link testinghub:testingselinumhub selenium/node-chrome:nightly
+docker run --name firefoxhub -d -p 5902:5900 --link testinghub:testingselinumhub selenium/node-firefox:nightly
+
+docker container
+docker ps -a
+docker inspect firefoxhub
+docker inspect chromehub
+docker inspect testinghub
+
+
+Download and install VNC Viewer
+
+public_ip of docker_host:5901 --- chrome
+public_ip of docker_host:5902 --- firefox
+
+Adhoc Commands are learned till now
+
+    --------------
+   | 08 June 2021 |
+    --------------
+
+2) method for multi container architecture : docker compose  -- YAML Files
+
+Installation of docker compose
+Docker compose commands
+
+vi docker-compose.yml
+
+docker rm -f $(docker ps -aq)
+
+BE/FE  - LAMP CI-CD Env Testing Env
+
+mysql wordpress
+---
+ services :
+  mydb :
+   image : mysql
+   environment: 
+    MYSQL_ROOT_PASSWORD
+  wordpress:
+   image : wordpress
+   ports:
+    - 6060:8080
+   links: 
+   - mydb:mysql
+   
+LAMP M A P
+
+vim docker-compose.yml
+
+---
+services :
+ mydb :
+  image : mysql
+  environment :
+   MYSQL_ROOT_PASSWORD : sunil
+ myserver :
+  image : tommee
+  ports :
+   - 6060:8080
+  links :
+  - mydb : mysql
+ myphp :
+  image : php
+  links :
+  - mydb : mysql
+  - myserver : mytomcat
+  
+docker rm -f $(docker ps -aq)
+docker-compose --version
+docker-compose up
+docker-compose down
+docker-compose stop
+docker-compose logs
+docker-compose ps
+
+
+---
+services :
+ mydb
+  image : mysql:5
+  MYSQL_ROOT_PASSWORD : nopassword
+ apache
+  image : tomee
+  -ports :
+   6060:80
+  -links :
+   mydb : mysql
+ php
+  image : php
+  -links :
+  mydb : mysql
+  apache : tomcat
+...  
+
+
+---
+services:
+ mydb:
+  image: mysql:5
+  environment:
+   MYSQL_ROOT_PASSWORD: nopassword
+ wordpress:
+  image: wordpress
+  ports:
+   -6060:80
+  links:
+   -mydb:mysql
+...
+
+---
+services:
+  mydb:
+    image: mysql:5
+    environment:
+      MYSQL_ROOT_PASSWORD: nopassword
+  wordpress:
+    image: wordpress
+    ports: -6060:80
+    links: -mydb:mysql
+---
+services:
+  mydb:
+    image: mysql:5
+    environment:
+      MYSQL_ROOT_PASSWORD: nopassword
+  apache:
+    image: tomee
+    ports: -6060:80
+    links:
+      -mydb: mysql
+  php:
+    image: php
+    links: null
+    -mydb: mysql
+    -apache: tomcat
+...
+
+--- LAMP
+services:
+ mydb:
+  image: mysql:5
+  environment:
+   MYSQL_ROOT_PASSWORD:nopassword
+ mysite:
+  image: tomee
+  ports:
+   -6060:8080
+  links:
+   -mydb:mysql
+ php:
+  image: php
+  links:
+   -mydb:mysql
+   -mysite:apache
+   
+   
+
+---
+services:
+ devserver:
+  image : jenkins/jenkins
+  ports:
+   -6060:8080
+ qaserver:
+  image : tomee
+  ports:
+   -7070:8080
+  links:
+   -devserver:cicd
+ prodserver:
+  image : tomee
+  ports:
+   -9090:8080
+  links:
+   -devserver:cicd   
+...
+
+---
+services:
+ hub:
+  image: seleinum/hub
+  ports: -4444:4444
+ chrome:
+  image: selenium/node-chrome/debug
+  ports: -5901:5900
+  links: -hub:selenium
+ firefox:
+  image: selenium/hub-firefox-debug
+  ports: -5902:5900
+  links: -hub:selenium
+  
+docker run --name centos it -d -v /data centos
+
+    --------------
+   | 09 June 2021 |
+    --------------
+Stateful containers  :- data will be saved permanently   ----------------------- Docker Volumes
+Stateless containers :- data will be lost once the container is deleted 
+
+Docker Volumes :- Anonymous volumes - named volumes - bind volumes
+
+Docker containers --                     temporary 
+Docker containers inside  data should be permanent
+
+simple docker volumes                         -- attach a volume directly to a containers
+docker volume containers ( Sharable volume )  -- a separate container acts like a volume manager and other containers borrow its volumes
+
+
+docker run --name centos01 -it -v /data centos
+cd  data 
+touch file1 file2
+exit
+ctrl + p q 
+docker run --name centos02 -it --volumes-from centos01 centos
+
+cd  data 
+touch file3 file4
+
+docker run --name centos03 -it --volumes-from centos02 centos
+cd  data 
+touch file5 file6
+
+mount path checking of 3 containers
+
+docker inspect centos01 
+docker inspect centos02
+docker inspect centos03
+
+
+docker attach centos01
+
+create customised docker images :- Dockerfile  & docker commit command
+
+using docker commit:
+-------------------
+
+docker run --name c1 -it ubuntu
+apt-get update
+apt-get install git
+
+git --version
+docker commit c1 myubuntu
+
+docker image ls or docker images
+
+docker run --name c2 -it myubuntu
+
+git --version
+java --version
+mvn -v
+jenkins --version
+
+
+
+    --------------
+   | 14 June 2021 |
+    --------------
+	create customised docker images :- Dockerfile
+Docker Key words :- FROM MAINTAINER RUN USER WORKDIR ADD COPY CMD ENV ENTRYPOINT EXPOSE    STOPSIGNAL LABEL VOLUME
+jagadish@jenkins:/var/lib/jenkins/mtdevcredits/linkgenerator$ ls -lrt
+total 136240
+-rwxrwxrwx 1 prasad prasad        526 Apr  8  2024 Dockerfile
+-rwxrwxrwx 1 prasad prasad        567 Apr 17  2024 application-clientsprod.properties
+-rwxrwxrwx 1 prasad jenkins 139494739 Apr 17  2024 LinkProviderService-0.0.1-SNAPSHOT.jar
+jagadish@jenkins:/var/lib/jenkins/mtdevcredits/linkgenerator$ cat Dockerfile
+FROM openjdk:8-jdk-alpine
+RUN mkdir /home/LinkGenerator && \
+    mkdir /home/LinkGenerator/config
+COPY LinkProviderService-0.0.1-SNAPSHOT.jar /home/LinkGenerator
+COPY application-clientsprod.properties /home/LinkGenerator/config
+WORKDIR /home/LinkGenerator/config
+EXPOSE 5004
+ENTRYPOINT ["java", "-Xms1024m", "-Xmx2048m", "-Dspring.profiles.active=clientsprod", "-jar", "/home/LinkGenerator/LinkProviderService-0.0.1-SNAPSHOT.jar","-Dspring.config.location=file:/home/LinkGenerator/config/application-clientsprod.properties"]
+---------------------------------------------------------------
+jagadish@jenkins:/var/lib/jenkins/proddockerfiles/australia_dockerfiles/llm_feeder$ cat Dockerfile
+FROM openjdk:8-jdk-alpine
+RUN mkdir /home/llmfeeder && \
+    mkdir /home/llmfeeder/config
+COPY llmfeeder-0.0.1-SNAPSHOT.jar /home/llmfeeder
+COPY application-clientsprod.properties /home/llmfeeder/config
+WORKDIR /home/llmfeeder/config
+EXPOSE 9011
+ENV JAVA_OPTS="-XX:PermSize=1024m -XX:MaxPermSize=3072m"
+ENTRYPOINT ["java", "-Xms1024m", "-Xmx5120m", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/home/llmfeeder/heapdump.hprof", "-Dspring.profiles.active=clientsprod", "-jar", "/home/llmfeeder/llmfeeder-0.0.1-SNAPSHOT.jar","-Dspring.config.location=file:/home/llmfeeder/config/application-clientsprod.properties"]
+----------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdevcredits/jumpreeqa/ems$ cat Dockerfile
+FROM openjdk:8-jdk-alpine
+RUN mkdir /home/EMS && \
+    mkdir /home/EMS/config
+COPY EMS-0.0.1-SNAPSHOT.jar  /home/EMS
+COPY application-clientsprod.properties /home/EMS/config
+
+
+WORKDIR /home/EMS/config
+EXPOSE 3000
+
+ENTRYPOINT /usr/sbin/crond && java -Xms1024m -Xmx2560m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/EMS/heapdump.hprof -Dspring.profiles.active=clientsprod -jar /home/EMS/EMS-0.0.1-SNAPSHOT.jar -Dspring.config.lcation=file:/home/EMS/config/application-clientsprod.properties
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdev/jumpreeqa/Analytics_v4$ cat Dockerfile
+FROM openjdk:8-jdk-alpine
+RUN mkdir /home/SpaceMngmtv2 && \
+    mkdir /home/SpaceMngmtv2/config
+COPY analyticsservice-0.0.1-SNAPSHOT.jar /home/SpaceMngmtv2
+COPY application-clientsprod.properties /home/SpaceMngmtv2/config
+#COPY ClusreMonitorClient-0.0.1-SNAPSHOT.jar /home/SpaceMngmtv2
+#COPY cap.sh /home/SpaceMngmtv2/cap.sh
+#RUN echo ' *  *  *  *  * sh /home/SpaceMngmtv2/cap.sh' >> /etc/crontabs/root
+#RUN echo ' */5 * * * * java  -Xms250m -Xmx512m -jar -Dregion=dev -Dspring.profiles.active=prod /home/SpaceMngmtv2/ClusreMonitorClient-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &' >> /etc/crontabs/root
+EXPOSE 4888
+WORKDIR /home/SpaceMngmtv2/config
+ENTRYPOINT /usr/sbin/crond && java -Xms1024m -Xmx3096m -Dspring.profiles.active=clientsprod -jar /home/SpaceMngmtv2/analyticsservice-0.0.1-SNAPSHOT.jar -Dspring.config.location=file:/home/SpaceMngmtv2/config/application-clientsprod.properties
+-----------------------------------------------------------------
+jagadish@jenkins:/var/lib/jenkins/proddockerfiles/singapore_dockerfiles/keymanagement$ cat Dockerfile
+FROM openjdk:8-jdk-alpine
+RUN mkdir /home/keymanagement && \
+    mkdir /home/keymanagement/config
+COPY *.jar /home/keymanagement
+COPY application-clientsprod.properties /home/keymanagement/config
+WORKDIR /home/keymanagement/config
+EXPOSE 6970
+ENTRYPOINT ["java", "-Xms1024m", "-Xmx3072m",  "-Dspring.profiles.active=clientsprod", "-jar", "/home/keymanagement/KeyManagement-0.0.1-SNAPSHOT.jar","-Dspring.config.location=file:/home/keymanagement/config/application-clientsprod.properties"]
+-------------------------------------------------------------------------------
+Draining a node -- Cordon a Node
+---------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdevold/dbsreplica/spacemanagementdashboard$ cat Dockerfile
+FROM tomcat:latest
+RUN chmod -R 777 /usr/local/tomcat/webapps/
+COPY spacemanagementV2.war /usr/local/tomcat/webapps/
+RUN mkdir -p /usr/local/tomcat/webapps/assets
+ADD assets /usr/local/tomcat/webapps/assets
+ADD webviewV2 /usr/local/tomcat/webapps/webviewV2
+ADD webviewV3 /usr/local/tomcat/webapps/webviewV3
+---------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdev/propertyguru/spacemanagementdashboard$ cat Dockerfile
+FROM tomcat:9.0-alpine
+COPY spacemanagementV2.war /usr/local/tomcat/webapps/spacemanagementV2.war
+ADD assets /usr/local/tomcat/webapps/assets
+ADD webview /usr/local/tomcat/webapps/webview
+ADD webviewV2 /usr/local/tomcat/webapps/webviewV2
+ADD webviewV3 /usr/local/tomcat/webapps/webviewV3
+ADD statusWebview /usr/local/tomcat/webapps/statusWebview
+ADD eventsaiwebview /usr/local/tomcat/webapps/eventsaiwebview
+CMD ["catalina.sh", "run"]
+----------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdevcredits/jumpreeqa/saasadmin$ cat Dockerfile
+FROM tomcat:9.0-alpine
+RUN rm -rf /usr/local/tomcat/webapps/*
+COPY saasAdminDashboard.war /usr/local/tomcat/webapps/
+#COPY community_v2 /usr/local/tomcat/webapps/
+RUN unzip /usr/local/tomcat/webapps/saasAdminDashboard.war
+RUN mkdir -p /usr/local/tomcat/webapps/community_v2 && \
+    mkdir /usr/local/tomcat/webapps/UserDocs && \
+    mkdir -p /usr/local/tomcat/webapps/communityv2 && \
+    mkdir -p /usr/local/tomcat/webapps/communityv3
+#COPY web.xml /usr/local/tomcat/conf/
+#ADD UserDocs /usr/local/tomcat/webapps/UserDocs
+#ADD tfadocs /usr/local/tomcat/webapps/tfadocs
+#ADD nintendodocs /usr/local/tomcat/webapps/nintendodocs
+#ADD mdlzdocs /usr/local/tomcat/webapps/mdlzdocs
+#ADD ifmdocs /usr/local/tomcat/webapps/ifmdocs
+ADD Events /usr/local/tomcat/webapps/community_v2/Events
+ADD Offers /usr/local/tomcat/webapps/community_v2/Offers
+ADD Polls /usr/local/tomcat/webapps/community_v2/Polls
+ADD PollsResult /usr/local/tomcat/webapps/community_v2/PollsResult
+ADD webFAQ /usr/local/tomcat/webapps/community_v2/webFAQ
+ADD Events /usr/local/tomcat/webapps/communityv3/Events
+ADD Offers /usr/local/tomcat/webapps/communityv3/Offers
+ADD Polls /usr/local/tomcat/webapps/communityv3/Polls
+ADD PollsResult1 /usr/local/tomcat/webapps/communityv3/PollsResult
+ADD webFAQ1 /usr/local/tomcat/webapps/communityv3/webFAQ
+ADD Events /usr/local/tomcat/webapps/communityv2/Events
+ADD Offers /usr/local/tomcat/webapps/communityv2/Offers
+ADD Polls /usr/local/tomcat/webapps/communityv2/Polls
+ADD PollsResult1 /usr/local/tomcat/webapps/communityv2/PollsResult
+ADD webFAQ1 /usr/local/tomcat/webapps/communityv2/webFAQ
+ADD zoomverify /usr/local/tomcat/webapps/zoomverify
+ADD fasttracknew /usr/local/tomcat/webapps/communityv2/fasttracknew
+RUN /bin/sh -c cd /usr/local/tomcat/webapps/saasAdminDashboard & cp -avr assets /usr/local/tomcat/webapps/
+CMD ["catalina.sh", "run"]
+--------------------------------------------------------------------------------------
+jagadish@jenkins:/var/lib/jenkins/mtdevcredits/propertyguru/ReactWebApp/code$ cat Dockerfile
+# Use a specific Node.js Alpine image as the base image for the build stage
+FROM node:20.5.1-alpine as builder
+
+# Update and install necessary packages
+RUN apk update && apk add --no-cache git
+
+# Set the working directory inside the container
+WORKDIR /frontend
+
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
+
+# Clean npm cache and install dependencies
+RUN npm cache clean --force
+RUN npm install -g webpack webpack-cli
+RUN npm install --legacy-peer-deps
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the application
+RUN npm run web-build
+
+# Use Tomcat image for the final stage
+FROM tomcat:latest
+RUN chmod -R 777 /usr/local/tomcat/webapps/
+
+# Clean up existing webapps and set up necessary directories
+RUN mkdir -p /usr/local/tomcat/webapps/assets && \
+    mkdir -p /usr/local/tomcat/webapps/digitalApp/fonts
+
+# Copy the built application and assets from the builder stage
+COPY --from=builder /frontend/dist /usr/local/tomcat/webapps/digitalApp
+COPY --from=builder /frontend/src/assests/ /usr/local/tomcat/webapps/assets/
+COPY --from=builder /frontend/public/fonts /usr/local/tomcat/webapps/digitalApp/fonts/
+-------------------------------------------------------------------------------------------------
+
+FROM jfrogimg.sgp.dbs.com:8443/baseos_redhat/ubi8/openjdk-8:latest as csmt-ems
+
+# Update and clean up
+RUN microdnf update && \
+    microdnf -y reinstall tzdata && \
+    microdnf clean all
+
+# Copy scripts and JAR files
+COPY ./scripts /app/scripts
+COPY ./jars /app/java
+#COPY ./*.p12 /app/ssl/
+
+RUN mkdir -p /app/lib && \
+   chmod -R g+rwx /app  /app/lib
+
+# Set permissions
+#RUN chmod -R 775 /app
+# Timezone configuration (if needed)
+#RUN rm /etc/localtime && \
+#ln -s /usr/share/zoneinfo/Asia/Singapore /etc/localtime
+
+# Start the final stage
+FROM scratch
+COPY --from=csmt-ems . .
+
+# Include SSL debugging in the Java CMD
+CMD java -Dspring.profiles.active=${profile} -Xms3072m -Xmx5120m -jar /app/java/*.jar
+
+=================================================================================================================================================
+# Stage 1: Download dependencies as wheels
+FROM python:3.11-slim AS wheel-downloader
+
+WORKDIR /wheeldownload
+
+COPY ./app/requirements.txt .
+
+RUN apt-get update && apt-get install -y build-essential gcc && \
+    pip install --upgrade pip && \
+    mkdir /wheels && \
+    pip download --no-cache-dir -r requirements.txt -d /wheels
+
+# Stage 2: Final build using pre-downloaded wheels
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy your application code
+COPY ./app /app
+
+# Copy wheels and requirements.txt from the first stage
+COPY --from=wheel-downloader /wheels /app/wheels
+COPY ./app/requirements.txt /app/requirements.txt
+
+# Install dependencies from local wheel folder
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-index --find-links=/app/wheels -r /app/requirements.txt
+
+EXPOSE 5010
+
+CMD ["gunicorn", "-b", "0.0.0.0:5010", "autostacking:app", "--timeout", "4000", "--log-level", "debug"]
+
+
+
+prasad@jenkins:/var/lib/jenkins/mtdevold/dbsreplica_gcp/AlgorithmService$ docker build -t algorithm-service .
+prasad@jenkins:/var/lib/jenkins/mtdevold/dbsreplica_gcp/AlgorithmService$ docker create --name temp-wheel-container algorithm-service
+prasad@jenkins:/var/lib/jenkins/mtdevold/dbsreplica_gcp/AlgorithmService$ docker cp temp-wheel-container:/app/wheels ./wheels
+prasad@jenkins:/var/lib/jenkins/mtdevold/dbsreplica_gcp/AlgorithmService$ zip -r wheels.zip wheels/
+
+
+
+
+
+dbs
+
+# Use Python 3.12 base image from your registry
+FROM jfrogimg.sgp.dbs.com:8443/baseos_redhat/ubi8/python-312:latest
+
+# Copy the zipped or bundled code directory into the container
+COPY ./unzipBinary /app/unzipBinary
+
+# List contents for debug (optional)
+RUN echo "Unzipped folder structure:" && ls -lR /app/unzipBinary
+
+# Set application root where autostacking.py and requirements.txt exist
+WORKDIR /app/unzipBinary/AlgorithmService/app
+
+# Install Python dependencies with timeout and no cache
+
+RUN pip install --upgrade pip --index-url=https://jfrogbin.sgp.dbs.com:9443/artifactory/api/pypi/pypi-all/simple --trusted-host=jfrogbin.sgp.dbs.com:9443
+
+RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt --index-url=https://jfrogbin.sgp.dbs.com:9443/artifactory/api/pypi/pypi-all/simple --trusted-host=jfrogbin.sgp.dbs.com:9443
+
+
+# Start the application
+CMD ["gunicorn", "-b", "0.0.0.0:5010", "autostacking:app", "--timeout", "4000", "--log-level", "debug"]	
+	
+	
+Cache Busting "&&"
+
+RUN mkdir /home/EMS && \
+    mkdir /home/EMS/config
+
+RUN mkdir -p /usr/local/tomcat/webapps/community_v2 && \
+    mkdir /usr/local/tomcat/webapps/UserDocs && \
+    mkdir -p /usr/local/tomcat/webapps/communityv2 && \
+    mkdir -p /usr/local/tomcat/webapps/communityv3
+
+RUN microdnf update && \
+    microdnf -y reinstall tzdata && \
+    microdnf clean all
+
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-index --find-links=/app/wheels -r /app/requirements.txt
+	
+	
+Docker Registry -- Public & private registries.
+
+docker login push the image to docker registry ( Public registry is docker hub)
+
+docker ps -a	
+docker attach: If the container’s main/default process is bash or a shell, attach lets you enter it.
+docker exec: If the default process is NOT bash (like nginx, python, java, etc.), use exec to run a new shell and enter the container.
+
+CMD - RUN - ENTRYPOINT differences  :-  
+	
+	--------------
+   | 15 June 2021 |
+    --------------
+	Container Orchestration 
+	
+	Orchestration : Runnning the docker containers in a distributed environment on multiple docker host m/c's is called orchestration.
+	Docker swarm :
+	
+	Installation of Docker Swarm:-
+	get.docker.com
+	curl -fsSL https://get.docker.com -o install-docker.sh
+	cat install-docker.sh
+	sh install-docker.sh --dry-run
+	sh  install-docker.sh
+	docker --version
+	
+	docker swarm init --advertise-addr privte_ip of the manager_node
+	
+	docker swarm join --token <token_id> pvt_ip:port
+	docker swarm join --token manager <token_id> pvt_ip:port
+	
+	manager node
+	worker node
+	
+	since ubuntu  default process is /bin/bash 
+	
+	FROM ubuntu
+	MAINTAINER ganesh
+	RUN apt-get update 
+	RUN apt-get install -y default -jdk-alpine
+	ADD https://get.jenkins.io/war-stable/2.2891/jenkins.war
+	ENTRYPOINT ["java", "-jar", "jenkins.war"]
+docker build -t myubuntu .
+docker run -it -d myubuntu
+
+docker ps -a ----  check the CMD section for the default process has changed for ubuntu contianer.
+
+
+docker service create --name webserver -p 9090:8080 --replicas 5 tomee
+docker service ps webserver
+
+docker service create --name dbserver --replicas 3 -e MYSQL_ROOT_PASSWORD=sunil mysql:5
+docker service ps dbserver
+
+docker service ls
+docker container ls
+
+docker service create --name appserver -p 8080:80 --replicas 5 nginx
+
+docker service ps webserver
+docker service ps appserver
+docker service ps dbserver
+
+docker service rm appserver dbserver webserver
+
+::: rolling update :::
+
+docker service scale appserver=2   
+docker service create --name myredis --replicas 6 redis:3
+
+docker service update --image redis:4 myredis
+
+docker service ps myredis
+
+docker service ps myredis | grep -v shutdown
+
+   ::: Rollback :::
+
+docker service update --rollback myredis
+
+by default in docker swarm one m/c will act as manager node and the other machines act as worker node's.
+intentionally adding worker node 1 as a another manager node 
+docker node promote worker1
+docker node demote worker1
+
+To remove a node from docker swarm 
+docker node ls
+docker node update --availability drain worker1  : all the containers running in the worker node 1 will be migrated to worker node 2 or manager.
+
+to get back the node to active state
+docker node update --availability active worker1
+
+If worker node 2 wants to leave as a docker swarm assistant
+
+docker swarm leave command needs to execute in worker node 2.
+docker node ls
+	
+	--------------
+   | 16 June 2021 |
+    --------------
+
+
+	
+    --------------
+   | 28 June 2021 |
+    --------------
