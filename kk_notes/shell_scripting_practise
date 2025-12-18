@@ -1,0 +1,945 @@
+Basics
+Comments
+variable = value
+ system or environmental or default  variables
+ programmer defined or user defined variables
+Special Variables
+
+read command
+  1) read basic input
+  2) using -p option for prompt
+  3) read the input one after the other
+  4) reading input as an array
+  5) readding input with timeout
+  6) reading input silently
+Operators 
+ 1) Arithmetic operators  $(( $a + $b )) :::::::   + - * / %
+ 2) Comparsion/ Relational Operators     :::::::   < > <= >= == !=   or -lt -gt -le -ge -eq -ne
+ 3) Logical or Boolean Parameters        :::::::   -o  -a !  || && negitive (And :- both true means true orelse false)
+                                                                            (Or  :- both false means false orelse true) 
+Command Line Arguments
+ 1) simpleif
+ 2) if else
+ 3) if elif else
+ 4) case
+
+Loops
+ 1) for loop
+ 2) while loop
+ 3) unitl
+
+Arrays
+
+
+
+Shell is command interpretor ; user ----> shell ----> OS Kernal (Linux) ============> output
+
+Default shell is bash
+
+shell
+bash ( Bourne again shell )
+k shell
+z shell
+c shell
+fish    mac OS
+
+echo $SHELL 
+env | grep shell
+echo $0 ---- current shell
+ps -p $$ ---- current shell
+
+cat /etc/shells
+
+sudo apt update
+
+sudo apt install csh -y
+
+Shell Scripting is a file contains collection of commands  --- executes in a sequential way.
+
+extension of shell scripting file is .sh
+
+. first.sh
+sh first.sh
+bash first.sh
+
+./first.sh  --- Need execute permissions for this file to execute a shell script "chmod +x first.sh"
+
+chmod
+chown
+chgrp
+
+
+In Linux OS -- uses shell scripting
+In windows OS -- uses powershell
+
+sh -x first.sh   : debug mode    command // OUTPUT
+
+vi first.sh
+
+set -x
+hostname
+set +x
+
+Comments are the important ones in the shell script , it can improve the readibility of the shell script and understand easily 
+Single line comment
+inline comment
+multi line comment
+
+
+ubuntu@ip-172-31-21-171:~/shell$ vi cm.sh
+<< allcomments
+#i am showing the date below
+date
+cal #this is calender command representing inline comment
+uname #Multi line comments are starts with  << time and ends with time
+allcomments
+
+echo "All comments are written in the script please do cat or tac to check the script"
+
+ubuntu@ip-172-31-21-171:~/shell$ sh cm.sh
+All comments are written in the script please do cat or tac to check the script
+
+Variable is a name of memory location its store a value, we can modify the value by executing the script
+
+varible = value
+a=20
+~~~~~~~~~~~~~~~~
+a is an variable
+= is an assignment operator
+20 is an value
+
+Rules to declare a variable in shell scripting
+
+ubuntu@ip-172-31-21-171:~/shell$ cat var2.sh
+echo a=90
+echo b=87
+echo first_name=jagadish
+echo last_name=kadiri
+ubuntu@ip-172-31-21-171:~/shell$ sh var2.sh
+a=90
+b=87
+first_name=jagadish
+last_name=kadiri
+ubuntu@ip-172-31-21-171:~/shell$ vi var2.sh
+ubuntu@ip-172-31-21-171:~/shell$ cat var2.sh
+echo $a=90
+echo $b=87
+echo $first_name=jagadish
+echo $last_name=kadiri
+ubuntu@ip-172-31-21-171:~/shell$ sh var2.sh
+=90
+=87
+=jagadish
+=kadiri
+
+*************************
+ubuntu@ip-172-31-21-171:~/shell$ cat var3.sh
+a=90
+b=87
+first_name=jagadish
+last_name=kadiri
+
+echo "A value is : $a"
+echo "B value is : $b"
+echo "C value is : $first_name"
+echo "D value is : $last_name"
+ubuntu@ip-172-31-21-171:~/shell$ sh var3.sh
+A value is : 90
+B value is : 87
+C value is : jagadish
+D value is : kadiri
+*************************
+
+Imp Note : if we need to display any variable value , that variable should be precedded with $
+
+Two types of variables in shell scripting
+1) System defined variables (envrionmental variables or default variables) 
+ echo $HOSTNAME or echo $USER or echo $PWD or echo $SHELL or  env | grep shell
+2) Programmer defined variables (user varibles)   
+
+Naming Conventions
+
+Command Line Arguments
+
+root@ip-172-31-21-171:/home/ubuntu/shell# cat intro.sh
+echo $0
+echo $1
+echo $2
+echo $3
+echo $4
+echo $5
+root@ip-172-31-21-171:/home/ubuntu/shell# sh  intro.sh i am jaga ready to help you guys
+intro.sh
+i
+am
+jaga
+ready
+to
+
+Special Variable $0 $! $@ $# $$ $* $?
+
+echo $0  : Name of the current script (or shell) being executed.
+echo $!  : Process ID (PID) of the last background process started.
+echo $@  : All the arguments passed to the script.
+echo $#  : Number of arguments passed to the script.
+echo $$  : Process ID of the current shell script itself.
+echo $*  : All arguments as a single string
+echo $?  : Exit status of the last executed command.
+
+
+ubuntu@ip-172-31-26-204:~/shell$ cat intro.sh
+echo $0
+
+ubuntu@ip-172-31-26-204:~/shell$ sh intro.sh
+intro.sh
+
+ubuntu@ip-172-31-26-204:~/shell$ sleep 10 &
+[1] 1361
+ubuntu@ip-172-31-26-204:~/shell$ echo $!
+1361
+
+ubuntu@ip-172-31-26-204:~/shell$ sh intro_all.sh i am jagadish working as a devops engineer at amazon
+i am jagadish working as a devops engineer at amazon
+
+ubuntu@ip-172-31-26-204:~/shell$ sh intro_num.sh i am jagadish working as a devops engineer at amazon
+10
+
+ubuntu@ip-172-31-26-204:~/shell$ echo $$
+1192
+ubuntu@ip-172-31-26-204:~/shell$ ps -ef | grep "intro_num.sh"
+ubuntu      1447    1192  0 07:54 pts/0    00:00:00 grep --color=auto intro_num.sh
+
+ubuntu@ip-172-31-26-204:~/shell$ sh intro_star.sh i am jagadish working as a devops engineer at amazon
+i am jagadish working as a devops engineer at amazon
+
+ubuntu@ip-172-31-26-204:~/shell$ echo $?
+0
+
+
+----------------
+
+#!/bin/bash
+# Demonstration of Shell Special Variables
+
+echo "--------------------------------------------"
+echo "🔹 Script Name                : $0"
+echo "--------------------------------------------"
+echo "🔹 Current Process ID (PID)   : $$"
+echo "🔹 Parent Process ID (PPID)   : $PPID"
+echo "--------------------------------------------"
+echo "🔹 Total Arguments (#)        : $#"
+echo "🔹 All Arguments (\$@)         : $@"
+echo "🔹 All Arguments (\$*)         : $*"
+echo "--------------------------------------------"
+echo "🔹 1st Argument               : $1"
+echo "🔹 2nd Argument               : $2"
+echo "🔹 3rd Argument               : $3"
+echo "--------------------------------------------"
+
+# Background process example
+sleep 5 &
+echo "🔹 Last Background PID (\$!)   : $!"
+echo "--------------------------------------------"
+
+# Exit status example
+ls /tmp >/dev/null
+echo "🔹 Exit Status of last cmd (\$?) : $?"
+
+# Some additional special variables
+echo "--------------------------------------------"
+echo "🔹 Random Number (\$RANDOM)       : $RANDOM"
+echo "🔹 Current Line Number (\$LINENO) : $LINENO"
+echo "🔹 Seconds since shell started    : $SECONDS"
+echo "--------------------------------------------"
+
+echo "Script executed successfully!"
+------------------------------------------
+
+Read command in shell script 
+
+basically read command speaks alot with user variables
+
+The read command is used to take input from the user and store it in a variable. It waits for the user to type something and press Enter.
+
+
+ubuntu@ip-172-31-21-35:~/shell$
+
+
+vi read1.sh
+
+#!/bin/bash
+echo "Enter your name"
+read name
+echo "Hello $name, Welcome to KK FUNDA!"
+
+vi read2.sh
+
+#!/bin/bash
+read -p "Enter your city : " city
+echo " I am living in $city"
+
+vi read3.sh
+
+#!/bin/bash
+
+read -p "enter your first and last name" first last
+echo "Your first name is $first"
+echo "Your last name is $last"
+
+vi read4.sh
+
+#!/bin/bash
+
+read -t 4 -p "Enter your favourite cricket : " cricketer
+echo " Your favourite cricketer is $cricketer "
+
+vi  read6.sh
+#!/bin/bash
+
+read -p "please enter your password:" password
+echo "Passoword entered is $password"
+echo "Thank you, please visit again!"
+vi read7.sh
+#!/bin/bash
+
+read -s -p "please enter your password:" password
+echo
+echo "Passoword entered is $password"
+echo "Thank you, please visit again!"
+
+
+
+
+
+ubuntu@ip-172-31-21-35:~/shell$ cat readp1.sh
+#!/bin/bash
+read -p "Please enter your name:" name
+read -p "please enter your age:" age
+
+echo "Hi $name your $age years old"
+ubuntu@ip-172-31-21-35:~/shell$ sh readp1.sh
+Please enter your name:ganesh
+please enter your age:28
+Hi ganesh your 28 years old
+
+ubuntu@ip-172-31-21-35:~/shell$ cat read8.sh
+#!/bin/bash
+
+read -s -p "please enter your password:" password
+echo
+echo "Passoword entered sucessfully"
+echo "Thank you, please visit again!"
+ubuntu@ip-172-31-21-35:~/shell$ bash read8.sh
+please enter your password:
+Passoword entered sucessfully
+Thank you, please visit again!
+
+******************************************************************************************************************************************************
+root@ip-172-31-21-171:/home/ubuntu# env | grep 'SHELL'
+SHELL=/bin/bash
+
+root@ip-172-31-21-171:/home/ubuntu# env | grep -i 'shell'
+SHELL=/bin/bash
+
+root@ip-172-31-21-171:/home/ubuntu# echo $0
+bash
+
+root@ip-172-31-21-171:/home/ubuntu# echo $SHELL
+/bin/bash
+
+root@ip-172-31-21-171:/home/ubuntu# ps -p $$
+    PID TTY          TIME CMD
+   1066 pts/1    00:00:00 bash
+   
+root@ip-172-31-21-171:/home/ubuntu# cat /etc/shells
+# /etc/shells: valid login shells
+/bin/sh
+/usr/bin/sh
+/bin/bash
+/usr/bin/bash
+/bin/rbash
+/usr/bin/rbash
+/usr/bin/dash
+/usr/bin/screen
+/usr/bin/tmux
+
+root@ip-172-31-21-171:/home/ubuntu# sudo apt update
+
+root@ip-172-31-21-171:/home/ubuntu# sudo apt install csh -y
+
+root@ip-172-31-21-171:/home/ubuntu# sudo apt update
+
+root@ip-172-31-21-171:/home/ubuntu# sudo apt install zsh -y
+
+root@ip-172-31-21-171:/home/ubuntu# /bin/zsh
+
+ip-172-31-21-171# env | grep 'SHELL'
+SHELL=/bin/bash
+
+ip-172-31-21-171# echo $SHELL
+/bin/bash
+
+ip-172-31-21-171# echo $0
+/bin/zsh
+
+ip-172-31-21-171# ps -p $$
+    PID TTY          TIME CMD
+   2063 pts/1    00:00:00 zsh
+ 
+ubuntu@ip-172-31-21-171:~/shell$ cat -n first.sh
+     1  echo "I am ganesh"
+     2  echo "I am working as Devops Engineer in Amazon"
+     3  pwd
+     4  uptime
+     5  uname
+     6  umask
+     7  echo "==============================="
+     8  hostname
+     9
+ubuntu@ip-172-31-21-171:~/shell$ sh first.sh
+I am ganesh
+I am working as Devops Engineer in Amazon
+/home/ubuntu/shell
+ 07:43:06 up 30 min,  4 users,  load average: 0.00, 0.00, 0.00
+Linux
+0002
+===============================
+ip-172-31-21-171
+ubuntu@ip-172-31-21-171:~/shell$ ./first.sh
+-bash: ./first.sh: Permission denied
+
+sh -x first.sh
+
+ubuntu@ip-172-31-21-171:~/shell$ vi first.sh
+ubuntu@ip-172-31-21-171:~/shell$ cat first.sh
+echo "I am Ganesh"
+echo "I am working as Devops Engineer in Amazon"
+pwd
+uptime
+uname
+umask
+echo "==============================="
+set -x
+hostname
+set +x
+
+
+
+Practise
+hash - bang --->  shbang
+
+vi basic1.sh
+
+#!/bin/bash
+name=jagadish
+age=20
+
+echo "My name is $name and age is $age"
+
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic1.sh
+My name is jagadish and age is 20
+
+vi basic2.sh
+
+name=$1
+age=$2
+
+echo "My name is $name and age is $age"
+
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh saddam 19
+
+My name is saddam and age is 19
+
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh saddam 19 >> tenthclass.txt
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh kalyan 18 >> tenthclass.txt
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh murali 17 >> tenthclass.txt
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh hussain 16 >> tenthclass.txt
+root@ip-172-31-26-204:/home/ubuntu/shell# cat tenthclass.txt
+My name is saddam and age is 19
+My name is kalyan and age is 18
+My name is murali and age is 17
+My name is hussain and age is 16
+root@ip-172-31-26-204:/home/ubuntu/shell# sh basic2.sh ramya 14 >> tenthclassgirls.txt
+
+root@ip-172-31-26-204:/home/ubuntu/shell# cat tenthclassgirls.txt >> tenthclass.txt
+root@ip-172-31-26-204:/home/ubuntu/shell# cat tenthclass.txt
+My name is saddam and age is 19
+My name is kalyan and age is 18
+My name is murali and age is 17
+My name is hussain and age is 16
+My name is ramya and age is 14
+-----------------
+root@ip-172-31-26-204:/home/ubuntu/shell# cat read0.sh
+#!/bin/bash
+
+#prompt user to enter their name
+echo "Enter your name"
+read namee
+echo "Hello, $namee! Welcome to the Devops."
+===========
+root@ip-172-31-26-204:/home/ubuntu/shell# sh read0.sh
+Enter your name
+harun
+Hello, harun! Welcome to the Devops.
+
+
+root@ip-172-31-26-204:/home/ubuntu/shell# sh read1.sh >> tenthclass.txt
+
+#!/bin/bash
+
+read -p "Enter your name is : " name
+read -p "Enter your age is : " age
+
+echo "My name is $name and age is $age"
+
+root@ip-172-31-26-204:/home/ubuntu/shell# cat read2.sh
+#!/bin/bash
+
+while true
+
+do
+ read -p "Enter your name is : " name
+ read -p "Enter your age is : " age
+
+ echo "My name is $name and age is $age" >> tenthclass.txt
+
+done
+--------------------------
+root@ip-172-31-26-204:/home/ubuntu/shell# cat read3.sh
+#!/bin/bash
+
+#please enter your name
+echo "please enter your name"
+read name
+
+echo "please enter your age"
+read age
+
+#output of the summaru entered details
+
+echo "Hello, $name! your age is $age"
+-------------------------
++++++++++++++++++++++++++++
+##########################################
+#!/bin/bash
+
+read -p "Enter username: " user
+read -sp "Enter password: " pass
+echo
+read -t 10 -p "Enter city (within 10s): " city
+city=${city:-Unknown}
+
+echo "User: $user"
+echo "Password: (hidden)"
+echo "City: $city"
+
+
+
+
+ubuntu@ip-172-31-21-35:~/shell$ cat read5.sh
+#!/bin/bash
+
+read -s -p "Please enter your password:" paasword
+echo "$password entered sucuessfully"
+
+ubuntu@ip-172-31-21-35:~/shell$ bash read5.sh
+Please enter your password: entered sucuessfully
+
+
+-------------
+ubuntu@ip-172-31-21-35:~/shell$ cat read8.sh
+#!/bin/bash
+
+read -s -p "please enter your password:" password
+echo
+echo "Password entered sucessfully"
+echo "Thank you, please visit again!"
+
+ubuntu@ip-172-31-21-35:~/shell$ bash read8.sh
+please enter your password:
+Password entered sucessfully
+Thank you, please visit again!
+
+
+********************************************read command examples**************************************
+ubuntu@ip-172-31-21-35:~/shell$
+ubuntu@ip-172-31-21-35:~/shell$ cat read1.sh
+#!/bin/bash
+echo "Enter your name"
+read name
+echo "Hello $name, Welcome to KK FUNDA!"
+ubuntu@ip-172-31-21-35:~/shell$ sh read1.sh
+Enter your name
+jagadish
+Hello jagadish, Welcome to KK FUNDA!
+ubuntu@ip-172-31-21-35:~/shell$ cat read2.sh
+#!/bin/bash
+read -p "Enter your city : " city
+echo " I am living in $city"
+ubuntu@ip-172-31-21-35:~/shell$ sh read2.sh
+Enter your city : hyderbad
+ I am living in hyderbad
+ubuntu@ip-172-31-21-35:~/shell$ cat read3.sh
+#!/bin/bash
+
+read -p "enter your first and last name :" first last
+echo "Your first name is $first"
+echo "Your last name is $last"
+ubuntu@ip-172-31-21-35:~/shell$ sh read3.sh
+enter your first and last name :raj tharun
+Your first name is raj
+Your last name is tharun
+ubuntu@ip-172-31-21-35:~/shell$ cat read3a.sh
+#!/bin/bash
+read -p "enter your first_name followed by last_name:" first last
+echo
+echo "your name is $first $last"
+ubuntu@ip-172-31-21-35:~/shell$ sh read3a.sh
+enter your first_name followed by last_name:shaik saddam
+
+your name is shaik saddam
+ubuntu@ip-172-31-21-35:~/shell$ cat read4.sh
+#!/bin/bash
+
+read -t 10 -p "Enter your favourite cricketer:" cricketer
+echo "Your favourite cricketer is : $cricketer"
+ubuntu@ip-172-31-21-35:~/shell$ bash read4.sh
+Enter your favourite cricketer:kohli
+Your favourite cricketer is : kohli
+ubuntu@ip-172-31-21-35:~/shell$ cat read5.sh
+#!/bin/bash
+
+read -s -p "Please enter your password:" paasword
+echo "$password entered sucuessfully"
+ubuntu@ip-172-31-21-35:~/shell$ sh read5.sh
+read5.sh: 3: read: Illegal option -s
+ entered sucuessfully
+ubuntu@ip-172-31-21-35:~/shell$ bash read5.sh
+Please enter your password: entered sucuessfully
+ubuntu@ip-172-31-21-35:~/shell$ cat read6.sh
+#!/bin/bash
+
+read -p "please enter your password:" password
+echo "Passoword entered is $password"
+echo "Thank you, please visit again!"
+ubuntu@ip-172-31-21-35:~/shell$ bash read6.sh
+please enter your password:ganesh@123
+Passoword entered is ganesh@123
+Thank you, please visit again!
+ubuntu@ip-172-31-21-35:~/shell$ cat read7.sh
+#!/bin/bash
+
+read -s -p "please enter your password:" password
+echo
+echo "Passoword entered is $password"
+echo "Thank you, please visit again!"
+ubuntu@ip-172-31-21-35:~/shell$ sh read7.sh
+read7.sh: 3: read: Illegal option -s
+
+Passoword entered is
+Thank you, please visit again!
+ubuntu@ip-172-31-21-35:~/shell$ bash read7.sh
+please enter your password:
+Passoword entered is ganesh@123
+Thank you, please visit again!
+ubuntu@ip-172-31-21-35:~/shell$ cat read8.sh
+#!/bin/bash
+
+read -s -p "please enter your password:" password
+echo
+echo "Passoword entered sucessfully"
+echo "Thank you, please visit again!"
+ubuntu@ip-172-31-21-35:~/shell$ sh read8.sh
+read8.sh: 3: read: Illegal option -s
+
+Passoword entered sucessfully
+Thank you, please visit again!
+ubuntu@ip-172-31-21-35:~/shell$ bash read8.sh
+please enter your password:
+Passoword entered sucessfully
+Thank you, please visit again!
+ubuntu@ip-172-31-21-35:~/shell$
+
+********************************operators examples *****************************************************
+
+$(( $a + $b ))
+
+
+Varible = value
+
+string = $variable
+
+$(( a + b ))
+$(( a - b ))
+$(( a \* b )) 
+$(( a / b ))
+$(( a % b ))
+
+
+case 1) simple addition operation with 2 hardcoded values
+case 2) simple arithmetic operation with 2 hardcoded values
+case 3) simple arithmetic operation with 2 dynamic values passing at execution of the script ("sh art3.sh 10 5")
+case 4) simple arithmetic operation with 2 dynamic values prompting at execution of the script sh arith4.sh
+
+Case 5) -eq -ne -lt -gt -le -ge
+
+
+Asks for two numbers.
+
+Prints their sum, difference, product, quotient, and remainder.
+
+#!/bin/bash
+
+echo "enter value of a :" a
+read a
+echo "enter value of b :" b
+read b
+echo
+echo A=$a B=$b
+echo "==========="
+echo "Sum of two numbers $(( a + b ))"
+echo "difference of two numbers $(( a - b ))"
+echo "product of two numbers $(( a * b ))"
+echo "divison of two numbers $(( a / b ))"
+echo "modulus of two numbers $(( a % b ))"
+
+
+
+#!/bin/bash
+a=$1
+b=$2
+echo A=$a B=$b
+echo "Sum of two numbers $(( a + b ))"
+echo "difference of two numbers $(( a - b ))"
+echo "product of two numbers $(( a * b ))"
+echo "divison of two numbers $(( a / b ))"
+echo "modulus of two numbers $(( a % b ))"
+
+#!/bin/bash
+a=5
+b=10
+echo A=$a B=$b
+echo "Sum of two numbers $(( a + b ))"
+echo "difference of two numbers $(( a - b ))"
+echo "product of two numbers $(( a * b ))"
+echo "divison of two numbers $(( a / b ))"
+echo "modulus of two numbers $(( a % b ))"
+
+
+ubuntu@ip-172-31-21-35:~/shell/chatgpt_q$ cat ar4.sh
+#!/bin/bash
+
+echo " Please enter the value of a : " a
+read a
+
+echo "Sqaure of a is $(( a * a ))"
+sleep 5
+echo "and"
+echo "Cube of a is $(( a * a * a ))"
+ubuntu@ip-172-31-21-35:~/shell/chatgpt_q$ sh ar4.sh
+ Please enter the value of a :  a
+6
+Sqaure of a is 36
+and
+Cube of a is 216
+
+read -p "Please enter the value of a: " a
+echo "Square: $((a * a)), Cube: $((a * a * a))"
+
+
+Ask the user for their age.
+If age is greater than or equal to 18, print “Eligible to vote”,
+else print “Not eligible”.
+
+#!/bin/bash
+read -p " please enter the age of the user : " age
+
+if [ $age -ge 18 ] ; then
+echo "Your are eligible to vote"
+else
+echo "You are not eligible to vote"
+fi
+
+Ask the user for two subject marks: maths and science.
+If both marks ≥ 35, print “Pass”, else “Fail”.
+
+#!/bin/bash
+read -p " please enter the maths marks : " maths
+read -p " please enter the science marks : " science
+if [ $maths -ge 35 ] && [ $science -ge 35 ]
+then
+echo " You are Qualified"
+else 
+echo " You are Not Promoted"
+
+
+1 → Arithmetic test
+2 → Comparison test
+3 → Logical test
+
+
+-rw-rw-r-- 1 ubuntu ubuntu 127 Nov  6 10:08 ar5.sh
+-rw-rw-r-- 1 ubuntu ubuntu 167 Nov  6 10:14 comp1.sh
+-rw-rw-r-- 1 ubuntu ubuntu 227 Nov  6 10:24 log1.sh
+
+#!/bin/bash
+
+read -p " please enter 1 for Arithmetic , 2 for Comparsion , 3 for Logical : "
+read choice
+case $choice in 
+1) sh ar5.sh
+2) sh comp1.sh
+3) sh log1.sh
+*) Enter either 1 or 2 or 3
+
+esac
+----------------------------------------------------
+ubuntu@ip-172-31-21-35:~/shell/chatgpt_q$ cat case1.sh
+#!/bin/bash
+
+read -p " please enter 1 for Arithmetic , 2 for Comparsion , 3 for Logical : " choice
+case $choice in
+1) sh ar5.sh;;
+2) sh comp1.sh;;
+3) sh log1.sh;;
+*) Please Enter either 1 or 2 or 3;;
+
+esac
+
+
+
+
+
+#!/bin/bash
+
+read -p " Please Enter 1 for sunday; 2 for Monday; 3 for Tuesday; 4 for Wednesday; 5 for Thursday; 6 for Friday; 7 for Saturday : " choice
+case $choice in
+1) echo "Sunday" ;;
+2) echo "Monday" ;;
+3) echo "Tuesday" ;;
+4) echo "Wednesday" ;;
+5) echo "Thursday" ;;
+6) echo "Friday" ;;
+7) echo "Saturday ;;
+
+esac
+
+
+Create a menu-driven calculator using case.
+
+Steps:
+
+Display a menu like:
+
+1. Addition
+2. Subtraction
+3. Multiplication
+4. Division
+
+
+Ask the user for a choice (1–4).
+
+Then ask for two numbers and perform the operation.
+
+Print the result.
+
+Handle invalid choices.
+
+#!/bin/bash
+
+read -p " Please Enter the number from 1 to 4 for mathematic operations : " choice
+
+case $choice in
+1) echo "$Addition" ;;
+2) echo "$Substraction" ;;
+3) echo "$Multiplcation" ;;
+4) echo "$Division" ;;
+
+read -p " please enter the first num : " first
+read -p " please enter the second num : " second
+
+esac
+
+
+
+#!/bin/bash
+
+echo "========= Simple Calculator ========="
+echo "1. Addition"
+echo "2. Subtraction"
+echo "3. Multiplication"
+echo "4. Division"
+echo "====================================="
+
+read -p "Please enter your choice (1-4): " choice
+
+read -p "Enter first number: " first
+read -p "Enter second number: " second
+
+case $choice in
+    1)
+        echo "Result: $((first + second))"
+        ;;
+    2)
+        echo "Result: $((first - second))"
+        ;;
+    3)
+        echo "Result: $((first * second))"
+        ;;
+    4)
+        if [ "$second" -ne 0 ]; then
+            echo "Result: $((first / second))"
+        else
+            echo "❌ Division by zero is not allowed!"
+        fi
+        ;;
+    *)
+        echo "❌ Invalid choice! Please enter 1, 2, 3, or 4."
+        ;;
+esac
+
+
+#!/bin/bash
+
+echo " Please enter the number from 1 to 20 for different variety of dosa's "
+echo " 1) Masala dosa "
+echo " 2) Oninon dosa "
+echo " 3) Ghee dosa "
+
+read -p " please enter the number from 1 to 3 : " choice
+
+case $choice in 
+echo "1) only masala dosa " ;;
+echo "2) Masala dosa and Oninon dosa" ;;
+echo "3) ghee dosa masala dosa onion dosa" ;;
+
+esac
+
+
+#!/bin/bash
+
+echo "==============================="
+echo " 🍽️  Welcome to Kumari Tiffins "
+echo "==============================="
+echo " Please select from our Dosa Menu:"
+echo " 1) Masala Dosa"
+echo " 2) Onion Dosa"
+echo " 3) Ghee Dosa"
+echo "==============================="
+
+read -p " Please enter your choice (1-3): " choice
+
+case $choice in
+  1)
+    echo "You selected: Masala Dosa — ₹40"
+    ;;
+  2)
+    echo "You selected: Onion Dosa — ₹45"
+    ;;
+  3)
+    echo "You selected: Ghee Dosa — ₹60"
+    ;;
+  *)
+    echo "❌ Invalid choice! Please enter a number between 1 and 3."
+    ;;
+esac
