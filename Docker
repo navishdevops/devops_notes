@@ -1,3 +1,52 @@
+-What is Docker?
+-What is container?
+-Containerization vs Virtualization
+-Docker Container Vs Vms
+-Docker Images
+-Docker Architecture
+-Docker Installation on Linux
+-Understanding the Docker components
+-Working with Images
+-Docker Containers
+-Docker Networking
+-Docker Files for building our own images
+-Docker Volumes for data persistency
+-Development and Deployment with Docker containers
+-Building Docker image from Jenkins job
+-Pushing own images to Docker hub
+-Pushing own images to ECR on AWS
+-Automating Docker image push to Docker hub/ECR on AWS from Jenkinsfile
+-through groovy script
+-What is Docker Compose?
+-Writing Docker Compose File
+-Deploying Micro service app with Docker compose
+-Configuring volumes with compose file
+-Automate deploying from Jenkins Pipeline to EC2 Instance Using Docker run
+-Automate deploying from Jenkins Pipeline to EC2 Instance Using Docker-Compose
+-Container Orchestrator tool – Docker swarm
+-High availability of app , Scaling and Load balancing on Docker Swarm Cluster
+-Networking in Docker swarm
+-Creating custom overlay networks in Docker swarm cluster
+-Deploying multiple containers on swarm cluster via Docker compose
+
+=========================================================
+
+Docker Introduction 
+Containerizationvs 
+Virtualization 
+DockervsVirtual Machine 
+Docker Installation& Its 
+Architecture 
+DockerAdhocCommands 
+Dockerfile 
+Docker Image 
+DockerContainer 
+DockerNetworks 
+DockerVolumes 
+Dockerfile& ItsKeyWords 
+Docker ImagesCreation 
+DockerRegistries(DockerHub, ECR, Nexus) 
+Docker Compose 
 
 
 Docker Basics-Docker Installation-Docker Architecture-Docker Terms-Docker key words-Docker compose and Installation-Docker Volumes
@@ -839,3 +888,4 @@ docker node ls
     --------------
    | 28 June 2021 |
     --------------
+
