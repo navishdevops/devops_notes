@@ -656,9 +656,21 @@ Concurrency of workflows and jobs in Git hub actions:
 
 By default in git hub actions we can run multiple workflows or jobs at the sametime
 
+by default cancel-in-progress : false : so  
 
-name:
+WF1 - Triggered - inprogress 
+WF2 - Triggered - queue -- once WF1 IS completed - WF2 will be in progress
+
+if cancel-in-progress: true
+
+WF1 - Triggered - inprogress
+WF2 - Triggered - WF1 will cancelled automatically - WF2 will be in progress
+
+
+name: concurrency workflow
 Concurrency:
+   group: deploy
+   cancel-in-progress: true
 on:
 jobs:
   docker-job:
@@ -746,7 +758,7 @@ concurrency
 cancel-in-progress
 
 by default cancel-in-progress is false in github actions worflow.
-by default 360 mins is the maximum time to complete one job or one worflow.
+by default 360 mins is the maximum time to complete one job
 by default step level timout can consider as high  priority than job level timeout-minutes:
 by default fail-fast  is true 
 -------------------------------------------------------------------------------------------------------------------------------------
