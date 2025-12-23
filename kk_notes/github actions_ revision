@@ -251,11 +251,6 @@ jobs:
             docker push ${{ vars.DOCKERHUB_USERNAME }}:${{ github.run_number }}
 
 
-              GITHUB_RUN_NUMBER
-
-              dckr_pat_ALeuSlI_bKQ5M__YxLOgV-fMIQg
-
-
 context -- github - jobs - runner - strategy - matrix - steps
 
 name:
