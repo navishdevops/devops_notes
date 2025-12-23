@@ -1,0 +1,303 @@
+name: dockerci-cd
+on:
+   push:
+     branch: [master]
+jobs:
+  dockerjob:
+    name: deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - name: Build application with Maven
+        run: mvn -B clean package
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ vars.DOCKERHUB_USERNAME }}/myapp:${{ github.run_number }} .
+          docker push ${{ vars.DOCKERHUB_USERNAME }}/myapp:${{ github.run_number }}
+
+--------------------------------------------------------------------------------------
+
+name: CICD Pipeline final
+on:
+  workflow_dispatch:
+jobs:
+  compile:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: install maven
+        run: |
+          sudo apt update
+          sudo apt install maven -y
+      - name: Build with Maven
+        run: mvn -B clean package
+  sonarqube:
+    runs-on: self-hosted
+    needs: compile
+    steps:
+      - name: SonarQube Analysis
+        run: mvn sonar:sonar
+  security-check:
+    runs-on: self-hosted
+    needs: sonarqube
+    steps:
+      - name: Install Trivy
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.67.2/trivy_0.67.2_Linux-64bit.deb
+          sudo dpkg -i trivy_0.67.2_Linux-64bit.deb
+      - name: Trivy FS Scan
+        run: trivy fs --format table -o fs-report.json .
+
+  docker-build:
+    runs-on: self-hosted
+    needs: security-check
+    steps:
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.Docker_Repository }}:${{ github.sha }} .
+    
+      - name: Push images to Docker Hub
+        run: |
+          docker push ${{ secrets.Docker_Repository }}:${{ github.sha }}
+  
+  deploy-eks:
+    runs-on: self-hosted
+    needs: docker-build
+    steps:
+      - name: Update Deployment Image
+        run: |
+          kubectl set image deployment/javawebappdep \
+            javawebapp=${{ secrets.Docker_Repository }}:${{ github.sha }}
+      - name: Verify rollout
+        run: kubectl rollout status deployment/javawebappdep
+
+
+Revision:
+
+
+name: First workflow
+on:
+   workflow_dispatch:
+      branches:
+          - main
+          - dev
+          - production
+jobs:
+  first-job: 
+     name: first-interview questions
+     runs-on: ubuntu-latest
+     steps:
+        - run: echo " Tell me about yourself"  > int.sh
+        - uses: actions/upload-artifact@v4
+          with:
+             name: interview
+             path: int.sh
+
+  second-job:
+      name: second-interview questions
+      needs: first-job
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/download-artifact@v4
+          with:
+            name: interview
+        - run: |
+             ls -lrth
+             cat int.sh
+             echo "---------------"
+             chmod +x run_env.sh
+             sh run_env.sh >> int.sh
+             cat README.md >> int.sh
+             cat int.sh
+        - uses: actions/upload-artifact@v4
+          with:
+             name: secondinterview
+             path: int.sh
+
+  third-job:
+      name: third-interview questions
+      needs: second-job
+      runs-on: ubuntu-latest
+      steps: 
+        - uses: actions/download-artifact@v4
+          with:
+            name: secondinterview
+        - run: |
+             ls -lrth
+             cat int.sh
+             echo "Succesfully tested the upload and download actions"
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+name: custom variables workflow
+env:
+   Image_OS: ubuntu24
+   GITUB_REPOSITORY_OWNER: navishdevops
+on:
+   workflow_dispatch:
+      branches:
+          - main
+          - dev
+          - production
+concurrency:
+  group: deploy
+  cancel-in-progress: true  // by default its false
+jobs:
+   job1:
+     name: defining varibales at job level
+     timeout-minutes: 150
+     env:
+       GITUB_REF_NAME: main
+       RUNER_OS: Linux
+     runs-on: ubuntu-latest
+     steps:
+        - name: defining variables at step level
+          env: 
+             POWERSHEL_DISTRIBUTION_CHANNEL: GitHub-Actions-ubuntu24
+             RUNER_ENVIRONMENT: github-hosted
+          run: |
+            echo " I am s.using $POWERSHEL_DISTRIBUTION_CHANNEL and its based on $RUNER_ENVIRONMENT  runner. "
+            echo " I am j.using $GITUB_REF_NAME branch and its deployed on $RUNER_OS distrubution. "
+            echo " I am w.using $Image_OS branch and its owner is $GITUB_REPOSITORY_OWNER. "
+            echo " I am r.using ${{ vars.NAME }} and profession is ${{ vars.PROFESSION }} "
+
+        - name: defining variables using job level
+          timeout-minutes: 60
+          run: |
+            echo " I am s.using $POWERSHEL_DISTRIBUTION_CHANNEL and its based on $RUNER_ENVIRONMENT  runner. "
+            echo " I am j.using $GITUB_REF_NAME branch and its deployed on $RUNER_OS distrubution. "
+            echo " I am w.using $Image_OS branch and its owner is $GITUB_REPOSITORY_OWNER. "
+            echo " I am r.using ${{ vars.NAME }} and profession is ${{ vars.PROFESSION }} "
+   job2:
+     name: defining varibales at workflow level
+     needs: job1
+     concurrency:
+        group: build-main
+        cancel-in-progress: true  // by default its false
+     runs-on: ubuntu-latest
+     steps:
+        - run : |
+            echo " I am s.using $POWERSHEL_DISTRIBUTION_CHANNEL and its based on $RUNER_ENVIRONMENT  runner. "
+            echo " I am j.using $GITUB_REF_NAME branch and its deployed on $RUNER_OS distrubution. "
+            echo " I am w.using $Image_OS branch and its owner is $GITUB_REPOSITORY_OWNER. "
+            echo " I am r.using ${{ vars.NAME }} and profession is ${{ vars.PROFESSION }} "
+
+--------------------------------- matrix strategy --------------------------------------------------------------
+
+name: matrix configurations
+on: push
+jobs:
+  deployment:
+     name: matrix deployments
+     strategy:
+       max-parallel: 2
+       fail-fast: false
+       matrix:
+           os: [windows-latest, ubuntu-latest]
+           images: [helloworld, alpine]
+           exclude: 
+              - os : windows-latest
+                image: alpine
+           include:
+              - os : ubuntu-latest
+                image: node:alpine
+     runs-on: ${{ matrix.os }}
+     steps:
+       - name: creating a  ${{ matrix.images }} on ${{ matrix.os }}
+         run: docker run ${{ matrix.images }}
+
+
+------------------------------------------ ci - cd pipeline ---------------------------------         
+
+name: dockerci-cd
+on: workflow_dispatch
+jobs:
+   dockerjob:
+     runs-on: ubuntu-latest
+     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - run:  mvn -B clean package
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+            docker build -t ${{ vars.DOCKERHUB_USERNAME }}:${{ github.run_number }} .
+            docker push ${{ vars.DOCKERHUB_USERNAME }}:${{ github.run_number }}
+
+
+              GITHUB_RUN_NUMBER
+
+              dckr_pat_ALeuSlI_bKQ5M__YxLOgV-fMIQg
+
+
+context -- github - jobs - runner - strategy - matrix - steps
+
+name:
+on:
+jobs:
+  buildjob:
+    name:
+    runs-on:
+    steps:
+       - name: github context
+         env: 
+            GITHUB_CONTEXT: ${{ toJson (github)}}
+         run: echo "$GITHUB_CONTEXT"
+       - name: steps context
+         env:
+            STEPS_CONTEXT: ${{ toJson(steps) }}
+         run: echo "$STEPS_CONTEXT"
+       - name: matrix context
+           env:
+              MATRIX_CONTEXT: ${{ toJson(matrix) }}
+           run: echo "$MATRIX_CONTEXT"
+
+
+
+
+
+
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - api/**
+    paths-ignore:
+      - README.md
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  deploy:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploying because PR was merged"
