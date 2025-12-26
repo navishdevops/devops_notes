@@ -1,4 +1,5 @@
-Modules - playbooks - varibales ( Global scope , host scope ( host_vars , group_vars ) , play scope ) - Loops - handlers
+Modules - playbooks - varibales ( Global scope , host scope ( host_vars , group_vars ) , play scope ) - Loops - handlers - 
+ansbile galaxy ( Roles collections ) - vault - Error handling - 
 
 Day 01:
 ------
