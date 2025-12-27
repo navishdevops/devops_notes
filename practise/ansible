@@ -1,0 +1,146 @@
+| Action            | Key   |
+| ----------------- | ----- |
+| End of file       | `G`   |
+| Start of file     | `gg`  |
+| End of line       | `$`   |
+| Start of line     | `0`   |
+| New line below    | `o`   |
+| New line above    | `O`   |
+| Save              | `:w`  |
+| Save & exit       | `:wq` |
+| Exit without save | `:q!` |
+
+sudo hostnamectl set-hostname smarten-jenkins
+sudo hostnamectl set-hostname bagmane-1
+sudo hostnamectl set-hostname bagmane-2
+
+To install Ansible on Control node follow the below commands
+
+sudo apt update
+
+sudo apt install software-properties-common -y
+
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+
+sudo apt install ansible -y
+
+ansible --version
+
+ssh-keygen
+
+copy the public key of ansible server and cofigured it in managed nodes the enable the password authentication to yes
+
+ubuntu@ip-172-31-10-115:~$ vi ~/.ssh/authorized_keys
+ubuntu@ip-172-31-10-115:~$ sudo vi /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+ubuntu@ip-172-31-10-115:~$ sudo vi /etc/ssh/sshd_config
+
+ubuntu@ip-172-31-11-162:~$ vi ~/.ssh/authorized_keys
+ubuntu@ip-172-31-11-162:/etc/ssh/sshd_config.d$ sudo vi /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+ubuntu@ip-172-31-11-162:/etc/ssh/sshd_config.d$ sudo vi /etc/ssh/sshd_config
+
+scp -i jag_aws_keypair.pem bagmane-1.pem bagmane2.pem ubuntu@43.205.118.76:/home/ubuntu/
+
+ubuntu@smarten-jenkins:~$ ls -l
+
+total 8
+-r-------- 1 ubuntu ubuntu 1674 Dec 27 07:38 bagmane-1.pem
+-r-------- 1 ubuntu ubuntu 1674 Dec 27 07:38 bagmane2.pem
+
+35.154.146.248 ansible_connection=ssh  ansible_user=ubuntu    ansible_ssh_private_key_file=/home/ubuntu/bagmane-1.pem
+35.154.203.150 ansible_connection=ssh  ansible_user=ubuntu    ansible_ssh_private_key_file=/home/ubuntu/bagmane2.pem
+---------------------------------------------------
+Modules in Ansible:- 
+apt git uri
+        cmd copy
+        		file fetch 
+				        shell service 
+						            replace user 
+---------------------------------------------------
+
+command shell  user  apt file copy 
+
+ubuntu@smarten-jenkins:~$ ansible all -i /etc/ansible/hosts -m command -a 'touch Dockerfile'
+ubuntu@smarten-jenkins:~$ ansible bagmane -m shell -a 'curl -fsSL https://get.docker.com -o install-docker.sh'
+ubuntu@smarten-jenkins:~$ ansible bagmane -m shell -a 'sh install-docker.sh'
+ubuntu@smarten-jenkins:~$ ansible bagmane -m command -a 'docker --version'
+
+ansible all/group_name/ip_adress -i path _of_inventory_file -m module_name -a 'arguments' 
+
+ubuntu@smarten-jenkins:~$ ansible all -m command -a 'docker --version'
+ubuntu@smarten-jenkins:~$ ansible bagmane -m command -a 'docker --version'
+ubuntu@smarten-jenkins:~$ ansible ubuntu@35.154.203.150 -m command -a 'docker --version'
+ubuntu@smarten-jenkins:~$ ansible all -i /home/ubuntu/prod_hosts -m command -a 'docker --version'
+
+
+ Additional command-line flags, such as -i for a custom inventory, --become or -b for privilege escalation (sudo), or -u for a specific remote user. 
+ 
+ansible bagmane -m ansible.builtin.user -a 'name=smarten password=smarten123 home=/home/smarten/ shell=/bin/bash uid=1234' -b
+
+ansible all -i /home/ubuntu/prod_hosts -m ansible.builtin.user -a 'name=smarten-new password=smarten123 home=/home/smarten/ shell=/bin/bash uid=1235' -b
+
+ansible all -m command -a 'git --version'
+ansible all -m ansible.builtin.git -a 'repo=https://github.com/navishdevops/Train-Ticket.git dest=/home/ubuntu/navish' -b
+ansible all -m ansible.builtin.apt -a 'name=nginx state=present' -b
+ansible all -m ansible.builtin.apt -a 'name=maven state=present update_cache=yes' -b
+ansible all -m ansible.builtin.apt -a 'name=tomcat10 state=present update_cache=yes' -b
+
+ansible all -m ansible.builtin.apt -a 'name=openjdk-17-jdk state=present update_cache=yes' -b
+ansible all -m ansible.builtin.apt_key -a "url=https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key state=present" -b
+ansible all -m ansible.builtin.apt_repository -a "repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present" -b
+ansible all -m ansible.builtin.apt -a "name=jenkins state=present update_cache=yes" -b
+ansible all -m ansible.builtin.shell -a "jenkins --version"
+ansible all -m ansible.builtin.lineinfile -a "path=/etc/default/jenkins regexp='^HTTP_PORT=' line='HTTP_PORT=8082'" -b
+ansible all -m ansible.builtin.file -a "path=/etc/systemd/system/jenkins.service.d state=directory" -b
+ansible all -m ansible.builtin.copy -a "dest=/etc/systemd/system/jenkins.service.d/override.conf content='[Service]\nEnvironment=\"HTTP_PORT=8082\"'" -b
+ansible all -m ansible.builtin.shell -a "systemctl daemon-reload" -b
+ansible all -m ansible.builtin.service -a "name=jenkins state=restarted" -b
+ansible all -m shell -a "ss -tulpn | grep 8082"
+
+ansible all -m copy -b -a "dest=/etc/systemd/system/jenkins.service.d/override.conf content='[Service] ExecStart=/usr/bin/java -Djava.awt.headless=true -jar /usr/share/java/jenkins.war --webroot=/var/cache/jenkins/war --httpPort=8082'"
+
+
+
+
+
+scp -i jag_aws_keypair.pem index.html ubuntu@43.205.118.76:/home/ubuntu/
+index.nginx-debian.html
+
+ansible all -m ansible.builtin.file -a 'name=/var/www/html/index.nginx-debian.html state=absent' -b
+ansible all -m ansible.builtin.copy -a 'src=/home/ubuntu/index.html dest=/var/www/html/' -b
+----------------------------------------------------------------------------------------------------------
+ansible all -m ansible.builtin.replace -a 'regexp=8080 replace=8081 path=/etc/tomcat10/server.xml' -b
+ansible all -m ansible.builtin.service -a 'name=tomcat10 state=restarted' -b
+file is used for permissions, ownership, directories, symlinks
+ansible all -m ansible.builtin.copy -a "src=/var/www/html/index.html dest=/var/lib/tomcat10/webapps/ROOT/index.html remote_src=yes" -b
+ansible all -m ansible.builtin.synchronize  -a "src=/var/www/html/index.html dest=/var/lib/tomcat10/webapps/ROOT/index.html" -b
+ansible all -m ansible.builtin.file -a "path=/var/lib/tomcat10/webapps/ROOT/index.html owner=tomcat group=tomcat mode=0644" -b
+ansible all -m ansible.builtin.service -a 'name=tomcat10 state=restarted' -b
+
+
+
+
+
+
+- name: Install Jenkins
+  hosts: all
+  become: yes
+  tasks:
+    - apt:
+        name: openjdk-17-jdk
+        state: present
+        update_cache: yes
+
+    - apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    - apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    - apt:
+        name: jenkins
+        state: present
+
+
+
