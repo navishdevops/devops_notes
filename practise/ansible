@@ -46,8 +46,22 @@ total 8
 -r-------- 1 ubuntu ubuntu 1674 Dec 27 07:38 bagmane-1.pem
 -r-------- 1 ubuntu ubuntu 1674 Dec 27 07:38 bagmane2.pem
 
+vi /home/ubuntu/prod_hosts
 35.154.146.248 ansible_connection=ssh  ansible_user=ubuntu    ansible_ssh_private_key_file=/home/ubuntu/bagmane-1.pem
 35.154.203.150 ansible_connection=ssh  ansible_user=ubuntu    ansible_ssh_private_key_file=/home/ubuntu/bagmane2.pem
+
+vi /etc/ansible/hosts  : default inventory file
+
+[bagmane]
+ubuntu@35.154.146.248
+ubuntu@35.154.203.150
+
+[bagmane1]
+ubuntu@35.154.146.248
+
+[bagmane2]
+ubuntu@35.154.203.150
+
 ---------------------------------------------------
 Modules in Ansible:- 
 apt git uri
@@ -57,7 +71,7 @@ apt git uri
 						            replace user 
 ---------------------------------------------------
 
-command shell  user  apt file copy 
+command shell  user  git apt file copy replace service synchronize
 
 ubuntu@smarten-jenkins:~$ ansible all -i /etc/ansible/hosts -m command -a 'touch Dockerfile'
 ubuntu@smarten-jenkins:~$ ansible bagmane -m shell -a 'curl -fsSL https://get.docker.com -o install-docker.sh'
@@ -117,7 +131,18 @@ ansible all -m ansible.builtin.file -a "path=/var/lib/tomcat10/webapps/ROOT/inde
 ansible all -m ansible.builtin.service -a 'name=tomcat10 state=restarted' -b
 
 
-
+apt :-          ansible all -m ansible.builtin.apt -a 'name=openjdk-17-jdk state=present update_cache=yes' -b
+git :-          ansible all -m ansible.builtin.git -a 'repo=https://github.com/navishdevops/Train-Ticket.git dest=/home/ubuntu/navish' -b
+uri :-          ansible all -m uri -a 'https://bagamne.smartenspaces.com/ems/healthcheck/'
+cmd :-          ansible ubuntu@35.154.203.150 -m ansible.builtin.command -a 'docker --version'
+copy:-          ansible all -m ansible.builtin.copy -a "src=/var/www/html/index.html dest=/var/lib/tomcat10/webapps/ROOT/index.html remote_src=yes" -b
+file:-          ansible all -m ansible.builtin.file -a "path=/var/lib/tomcat10/webapps/ROOT/index.html owner=tomcat group=tomcat mode=0644" -b
+fetch:-         ansible all -m fetch -a 'src=/tmp/tomcat-users.xml dest=/tmp/' -b
+shell:-         ansible all -i /etc/ansible/hosts -m shell -a 'sh install-docker.sh'
+service:-       ansible all -m ansible.builtin.service -a 'name=tomcat10 state=restarted' -b
+user:-          ansible bagmane -m ansible.builtin.user -a 'name=smarten password=smarten123 home=/home/smarten/ shell=/bin/bash uid=1234' -b
+replace:-       ansible all -m ansible.builtin.replace -a 'regexp=8080 replace=8081 path=/etc/tomcat10/server.xml' -b
+synchronize:-   ansible all -m ansible.builtin.synchronize  -a "src=/var/www/html/index.html dest=/var/lib/tomcat10/webapps/ROOT/index.html" -b
 
 
 
