@@ -1,0 +1,17 @@
+*Lera Technologies first round Questions* 
+
+- Cicd stages
+- Sonar qube performance measure 
+- Pod  crashloopback imagepullbackoff pending
+- Service:-  cluster-ip + node port+  load balancer + nginx 
+- Deployment: rolling update+ recreate+ canary strategies
+- zero down time 
+- Terraform - workspace+modules+
+ .tf + .tfvars  + variables 
+- Ansible for automated deployment 
+- dev env auto deployment strategy 
+- how do you secure your secrets 
+- explain the recent production issue
+- explain GitHub actions deployment
+- difference between GitHub actions and jenkins
+- without any offer in hand why are you left your previous job
