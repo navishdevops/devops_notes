@@ -1,0 +1,322 @@
+Exercise 1: Create a tomcat server ami in aws and azure. - Done
+Exercise 2: 
+
+
+Day-01
+* Packer and terraform are developed by Hashicorp and written in go lang.
+* Packer and terraform are concentrated on virtual server's.
+* it also do creating and managing the infrastructure for our applications.
+* it works on almost all the virtualization platforms
+
+
+* Every virtualisation platform needs an image to create virtual machines.
+* Packer can help in the creation of vm images in any virtualisation platform. 
+* for creation of images packer needs an .json file with all the necessary information of the softwares required.
+* Terraform creates infrastructure components like RG,VNET,SUBNET,VIRTUAL MACHINE.
+* for creation of infra needs .tf files in a folder 
+* packer can create images and terraform can create resources in cloud platforms.
+
+Day-02
+Build the application and deploy into server : To build an application requires a code (java) & server (vm) 
+ to create server need few resources, to create an resource need an custom image 
+ to create an custom image will take the packer help once image is created by packer , will use the packer image and
+ create resource using terraform once resource is created will deploy the application by using shell scripts and ansible.
+
+Image → Infrastructure → Configuration → Deployment
+
+Generate an custom image (contains tomcat server in it)
+
+step 1: https://docs.chocolatey.org/en-us/choco/setup/            <--- for installing chocolatey in windows 
+step 2: https://community.chocolatey.org/packages/packer/1.8.7    <--- for installing packer in windows ( choco install packer --version=1.8.7 )
+        packer --version  : 1.8.7
+        packer --help  : { init build validate  plugins }
+step 3: create an launch an EC2 m/c with the ubuntu base image
+step 4: sudo apt-get update
+step 5: sudo apt-cache search jdk
+step 6: sudo apt-cache search tomcat
+step 7: sudo apt-get install openjdk-11-jdk -y
+step 8: sudo apt-get install tomcat10 -y
+step 9: sudo service tomcat status
+step 10: switch to aws console - EC2 - select the ec2 m/c - click on actions - navigate to image and templates - 
+         click on create image  - image name is : tomcat
+step 11: launch an ec2 m/c with the custom image and check the application code.
+
+Packer works using a JSON configuration file, which is divided into four main sections:
+
+        1️⃣ Variables        : Used to define reusable values such as AMI names, regions, instance types, and credentials.
+                             : Helps avoid hardcoding and makes the template flexible.
+
+        2️⃣ Builder          : The builder section spescifies the virtualization or cloud environment where Packer creates the image.
+                             : It defines details like cloud provider, base image, region, and instance configuration.
+
+        3️⃣ Provisioner        : Provisioners are used to execute commands or scripts inside the temporary instance.
+                              : They install and configure required software, packages, and dependencies.
+
+        4️⃣ Post-Processor    : Handles post-build actions after the image is created.
+                              : Examples include image compression, tagging, exporting, or publishing the image.
+
+Day-03: 
+for the packer to create an custom image from the base image need some important info
+  1) access_key 
+  2) secret_key
+  3) type
+  4) instance_type
+  5) region
+  6) source_ami
+
+packer file (aws.json) is written in format of key-value pairs and the datatypes which used are
+
+text : "jagadish"
+number : 24
+boolean : true
+list  : ["AWS", "AZURE", "GCP"]
+object : {
+     "House-no" : 19-989,
+     "stree" : "Gandhi Nagar"
+     "city" : "velugode"
+}
+
+packer file  - varibles - builders - provisioners - post-processor
+
+varibles is an object. and varibles which is defined in packer called as user varibles --  env varibles also there.
+builders and provisioners are arrays of an object.
+
+provisioner is a script that has to run after VM has created by using builder section in packer file 
+Types of provisioners : shell | file | ansible 
+packer shell provisioner supports -- { inline | script | scripts }
+
+{
+    "variables" : {
+        "aws_access_key" : "",
+        "aws_secret_key" : ""
+    },
+    "builders" : [
+        {
+          "access_key" : "{{user \"aws_access_key\"}}",
+          "secret_key" : "{{user \"aws_secret_key\"}}",
+          "type" : "amazon-ebs",
+          "instance_type" : "t2.medium",
+          "source_ami" : "ami-02b8269d5e85954ef",
+          "region": "ap-south-1",
+          "ssh_username": "ubuntu",
+          "ami_name": "packer_AWS {{timestamp}}"
+
+        }
+    ],
+    "provisioners" : [
+        {
+            "type" : "shell",      // file ansible shell { inline - script - scripts } 
+            "inline" : ["sudo apt-get update -y",
+                         "sudo apt-get install git -y"
+                       ],
+            "script" : "./maven.sh",
+            "scripts" : ["maven.sh","jenkins.sh","ansible.sh"]
+        }
+    ]
+}
+------------------------------------------------
+myvariables.json
+
+{
+"aws_access_key" : "",
+"aws_secret_key" : ""
+}
+-------------------------------------------------
+Packer commands:
+
+packer --help
+packer init
+packer inspect
+packer validate .\aws.json
+packer build -debug .\docker.json
+packer validate -var 'aws_access_key=<value of accesskey>' -var 'aws_secret_key=<value of secretkey>' .\aws.json
+packer build -var-file myvariables.json ./aws.json
+
+
+Terraform 
+
+1) Idempotent
+1.a) immutable
+2) Terraform : {.tf  & .tfvars} - providers - resources - provisioners  - variables
+                                - modules - backends - outputs - workspace
+                                - imports - null resource - policy as code -functions - drift - datasources 
+Terraform commands :
+ * terraform --help
+ * choco install terraform -y
+ * terraform --version
+ * terraform init .     // .terraform folder will create
+ * terraform plan -out=tfplan
+ * terraform validate .
+ * terraform apply .    // .tfstate  & .tfstate.backup   files will create
+ * terraform destroy .
+
+
+3) Every provider provides resources
+4) providers are aws - azure - gcp and resources are :- vpc subnet internet_gateway route_tables
+5) provisioners : terraform supports various provisioners like - shell - file - local-exec - remote-exec 
+6) Terraform support multi-environment creation 
+7) for a packer input is a cicd.json file and for terraform input is a folder "hello-tf"
+8) input in a terraform file is called as arguments and outputs are called as attributes.
+9) mkdir hello-tf > vi main.tf 
+
+   provider "aws" {
+    access_key = "value of an access key"
+    secret_key = "value of an secret key"
+    region     = "us-west-2"
+   }
+
+   resource "<type>" "<name>" {
+    arg1    = "<value 1>"
+    argn    = "<value n>"
+   }
+---------------------------------------------------
+   vi main.tf
+
+   provider "aws" {
+    access_key = "<value of access key>"
+    secret_key = "<value of secret key>"
+    region     = "us-west-2"
+   }
+
+   resource "aws_vpc" "myvpc" {
+    cidr_block = "192.168.0.0/16"
+
+    tags{
+        "Name" = "from-tf"
+    }
+   }
+---------------------------------------------------
+
+10) Resource dependencies :-
+
+EC2 - VPC - SUBNETS 1,2,3,4,5.
+
+         "${<resource-type>.<resource-name>.<attribute-name>}"
+vpc_id = "${ aws_vpc.myvpc.id}"
+---------------------------------------------------
+vi main.tf 
+
+provider "aws" {
+    access_key = ""
+    secret_key = ""
+    region = "us-west-2"
+}
+
+resource "aws_vpc" "myvpc" {
+    cidr_block = "192.168.0.0/16"
+    tags = {
+        "Name" = "from-tf"
+    }
+  
+}
+
+resource "aws_subnet" "subnet1" {
+    cidr_block = "192.168.0.0/24"
+    vpc_id = "${aws_vpc.myvpc.id}" 
+    availability_zone = "us-west-2a"
+    tags = {
+        "Name" = "Subnet-1"
+    }
+}
+
+resource "aws_subnet" "subnet2" {
+    cidr_block = "192.168.1.0/24"
+    vpc_id = "${aws_vpc.myvpc.id}"
+    availability_zone = "us-west-2b"
+    tags = {
+        "Name" = "subnet-2"
+    } 
+}
+---------------------------------------------------
+
+11) terraform init .     execute  this to intialize the terrafom and it will create .terraform  folder including with all plugins
+          F:\2026\Devops\terraform\hello-tf\.terraform\providers\registry.terraform.io\hashicorp\aws\6.28.0\windows_amd64
+
+12) terraform plan -out=tfplan   // .tfplan file will create ( it tells about the info what has to be create )
+13) terraform apply tfplan       // .tfstate file will create  ( it stores the info what was created )
+    terraform apply tfplan       // .tfstate.backup file will create ( it stores the previous success configuration)
+
+14) terraform validate .
+15) "terraform apply"  execute  this to create infra and also observe that there will be .tfstate file is created in it 
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.    line 163
+
+16) add one more subnet to main.tf file - and then do terraform apply --- it compares with cloud provider  &  .tfstate file  and then execute
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.  line 215
+
+###  17) terraform apply ------ main.tf  (expectation)  ---  cloud provider (reality )----- ".tfstate" file comparsion will start 
+ terraform refresh 
+ terraform plan
+ terraform apply
+
+## Task 1 : creat a main.tf provider - resource vpc - subnet 1 and subnet 2
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.    line 163
+## Task 2 : add one more  subnet 3  
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.  line 215
+## Task 3 : delete one subnet from console : apply     
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed. //.tfstate have the info like which is already created and the script main.tf 3 subnets are there. 
+## Task 4 : delete one subnet from template : apply
+Apply complete! Resources: 0 added, 0 changed, 1 destroyed.
+## Task 5 : change the tag value for one subnet 
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+## Task 6 : change the availability zone for one subnet 
+Apply complete! Resources: 1 added, 0 changed, 1 destroyed. //its deleting and re-creating the new subnet with the new one
+## Task 7 : organise the terraform scripts
+   provider.tf - main.tf - variables.tf - outputs.tf - backend.tf - terraform.tfvars
+
+###  18) organise the terraform scripts
+           choco install awscli -y
+# PS F:\2026\Devops\terraform\aws-tf> aws configure --profile terraform
+AWS Access Key ID [None]: AKIYU2BMI
+AWS Secret Access Key [None]: TETiwJcrvfiJLi1t
+Default region name [None]: ap-south-1
+Default output format [None]: json
+
+📄 ~/.aws/credentials
+📄 ~/.aws/config
+
+# PS F:\2026\Devops\terraform\aws-tf> aws sts get-caller-identity --profile terraform
+{
+    "UserId": "024190747072",
+    "Account": "024190747072",
+    "Arn": "arn:aws:iam::024190747072:root"
+}
+
+# vi keys.tfvars
+
+aws_profile = "terraform"
+region      = "us-east-1"
+
+# vi provider.tf
+
+provider "aws" {
+    profile    = var.aws_profile
+    region     = var.region
+}
+
+# vi main.tf
+resource "aws_vpc" "myvpc" {
+    cidr_block = "192.168.0.0/16"
+
+    tags = {
+      "Name" = "from-tf"
+    } 
+}
+
+resource "aws_subnet" "subnet1" {
+    cidr_block = "192.168.0.0/24"
+    availability_zone = "us-west-2a"
+    vpc_id = "${aws_vpc.myvpc.id}"
+
+    tags = {
+        "Name" = "subnet-1"
+    }
+}
+
+# vi variables.tf
+variable "aws_profile" {
+  type        = string
+}
+variable "region" {
+    type = string
+    default = "us-east-1"
+}
