@@ -261,7 +261,7 @@ Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
 ## Task 6 : change the availability zone for one subnet 
 Apply complete! Resources: 1 added, 0 changed, 1 destroyed. //its deleting and re-creating the new subnet with the new one
 ## Task 7 : organise the terraform scripts
-   provider.tf - main.tf - variables.tf - outputs.tf - backend.tf - terraform.tfvars
+   - keys.tfvars provider.tf - main.tf - variables.tf - outputs.tf - backend.tf 
 
 ###  18) organise the terraform scripts
            choco install awscli -y
@@ -320,3 +320,73 @@ variable "region" {
     type = string
     default = "us-east-1"
 }
+
+terraform init
+terraform plan
+terraform plan -out=aws.plan
+terraform apply aws.plan
+terraform validate
+terraform apply
+terraform refresh
+terraform taint <resource-type>.<resource-name>
+terraform untaint <resource-type>.<resource-name>
+terraform graph | dot -Tsvg > graph.svg
+terraform show 
+terraform provider
+
+###  18) terraform refresh : is used to update the local (*.tfstate file ) with resources created on cloud provider.
+###  19) Terraform modules  { main.tf - variables.tf - outputs.tf }
+A Terraform module is a collection of standard configuration files in a dedicated directory. 
+Terraform modules encapsulate groups of resources dedicated to one task, reducing the amount of code you have to develop for similar infrastructure components.
+
+ https://scalr.com/learning-center/terraform-modules-explained/
+-------------------------------------------------------------------
+ module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "my-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+  enable_nat_gateway = true
+  enable_vpn_gateway = true
+
+  tags = {
+    Terraform = "true"
+    Environment = "dev"
+  }
+}
+---------------------------------------------------------------------
+
+ ###  20) Terraform Outputs 
+outputs is result of the infra provisioning 
+--------------------------------------------
+output "vpc-id" {
+    value = "${aws_vpc.myvpc.id}"
+}
+output "subnet-id" {
+    value = "${aws_subnet.subnet1.id}"
+}
+
+###  21) datasources used to read the existing information from the providers
+
+data "aws_vpc "default" {
+    default = true
+}
+resource "aws_subnet" "subnet4" {
+    cidr_block = "172.31.48.0/24"
+    vpc_id = "${data.aws_vpc.default.id}
+}
+
+###  22 ) Terraform Backend
+The Terraform Azure backend (type azurerm) is used to store the Terraform state file in Azure Blob Storage, enabling team collaboration, state locking, and secure, durable storage of your infrastructure state data. 
+
+###  23 ) Terraform provisioner
+
+terraform.tfvars provider.tf varibles.tf outputs.tf main.tf
+
+
+to create an ec2 m/c : touch data.tf main.tf outputs.tf provider.tf security_group.tf terraform.tfvars varibles.tf
