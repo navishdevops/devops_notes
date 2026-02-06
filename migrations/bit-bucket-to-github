@@ -1,0 +1,114 @@
+BitBucket To GitHub Migration — A complete Manual and Automation Guide
+-------------------------------------------------------------------------
+
+Each of techie is using versioning tool, but we often face difficulties when we need to migrate from once versioning tool to another.
+Now days, lot of organizations are migrating from BitBucket to GitHub, each having its own reason like cost, security, etc.
+
+But what if we have 100 Bitbucket repo’s and we need to migrate them all to GitHub. Tedious task ? Not exactly, this can actually be done in minutes.
+
+Below is the complete guide for the same with manual steps as well as automating it via using shell script.
+
+Manual Steps:
+These steps needs to be carried out for each of the repo we need to migrate from BitBucket to GitHub.
+
+Note: For each of the below step, please enter your credentials whenever prompted.
+
+Clone your Bitbucket repo:
+git clone — mirror {bitbucket-repo-clone-url}
+
+Example:
+
+git clone https://bitbucket.com/projectname/myrepo-name.git
+
+2. Go to the cloned repo.
+cd repo.git
+
+Example:
+
+cd myrepo-name.git
+
+3. Create GitHub repo weher we need to migrate our bitbucket repo:
+We can either create it manually via GitHub UI or via using command line.
+gh repo create ${name_of_github_org}/${gh_repo} — private — team $TEAM
+
+Example:
+
+gh repo create orgname/myrepo-name — private — team $TEAM
+
+Note: Please install “gh” if its not install.
+Note: Eliminate “ — private — team $TEAM” from above command if you don’t your repo to be assigned to any team.
+
+4. Set the remote origin url i.e. the GitHub url where data will now be pushed.
+git remote set-url origin https://github.com/{name-of-github-org}/{repo-name-on-github}
+
+Become a member
+Example:
+
+git remote set-url origin https://github.com/orgname/myrepo-name
+
+5. Add bitbucket url that’s need to be mirror, same as in Step:1
+git remote add bitbucket {bitbucket-repo-clone-url}
+
+Example:
+git remote add bitbucket https://bitbucket.com/projectname/myrepo-name.git
+
+6. Mirroring complete BitBucket repo to GitHub. This will push all BitBucket repo stuff i.e. history/code/branches/commit to GitHub.
+
+git push origin — mirror
+
+7. Clean/Remove your cloned repo from system:
+cd .. && rm -rf myrepo-name.git
+
+Automating manual steps via shell script:
+We can directly use below shell script and it will migrate all our bitbucket repo’s to GitHub.
+This shell script reads the repo to be migrated from text file bitbucket_repos.txt, so we need to make a text file named as bitbucket_repos.txt with all repo’s(clone url’s) that we need to migrate.
+
+###############Shell script for migrating all repo’s reading from file################
+#!/bin/bash
+
+name_of_github_org=”orgname”
+TEAM=”Teamname” ##Remove if no team needs to be assigned for repo’s
+
+while IFS=”” read -r p || [ -n “$p” ]
+do
+git clone — mirror $p
+repo=echo $p |cut -d’/’ -f6
+
+echo “Local repo created: $repo”
+
+cd ${repo}
+
+gh_repo=echo $repo|cut -d’.’ -f1
+
+gh repo create ${name_of_github_org}/${gh_repo} — private — team $TEAM
+
+##comment above and use below if no team needs to be assigned for GitHub repo
+##gh repo create barcotestemu/${gh_repo} — private
+git remote set-url origin https://user@apikey@github.com/${name_of_github_org}/${gh_repo}
+
+git remote add bitbucket $p
+git push origin — mirror
+done < bitbucket_repos.txt
+
+bitbucket_repos.txt sample:
+https://bitbucketurl/projectname/myrepo1.git
+https://bitbucketurl/projectname/nex/myrepo2.git
+
+Prerequisite for executing shell script:
+1. Setup git auto login(no user password entry again and again) for 1 hour(bitbucket):
+
+git config — global credential.helper cache
+git config — global credential.helper ‘cache — timeout=3600’
+
+2. copy paste the above shell script in file bitbucket_to_github_migration.sh
+
+3. Edit shell script i.e. replace user and apikey in below line with your actual user and apikey for GitHub login :
+https://user@apikey@github.com/${name_of_github_org}/${gh_repo}
+
+4. Make your input file bitbucket_repos.txt which contains all bitbucket clone url’s of repo’s that needs to be migrated. Once repo url in each line.
+
+5. Keep the input file and shell script in same directory.
+
+6. Run Shell script:
+
+bash bitbucket_to_github_migration.sh
